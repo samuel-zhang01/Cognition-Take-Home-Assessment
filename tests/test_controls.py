@@ -64,6 +64,14 @@ def upload_csv(client, module, path, dry_run, reason="Quarterly onboarding batch
     )
 
 
+def upload_csv_content(client, module, filename, content, dry_run=True):
+    return client.post(
+        f"/api/import/{module}",
+        files={"file": (filename, content, "text/csv")},
+        data={"reason": "Import validation test", "dry_run": str(dry_run).lower()},
+    )
+
+
 def test_each_role_can_make_its_happy_path_change_and_auditor_sees_it(client):
     reviewer = login(client, "rita.reviewer")
     response = reviewer.post(
@@ -358,10 +366,26 @@ def test_access_reviews_decision_permissions_and_stale_version(client, db_path):
     body = {"decision": "certify", "reason": "Access confirmed with manager", "expected_version": 1}
     assert nina.post(path, json=body).status_code == 200
     assert nina.get("/api/access-reviews?status=certified").json()
-    assert db_rows(
-        db_path, "SELECT status, decided_at FROM entitlements WHERE id='ENT-002'"
-    )[0]["status"] == "certified"
+    certified = db_rows(
+        db_path, "SELECT status, decided_at, version FROM entitlements WHERE id='ENT-002'"
+    )[0]
+    assert certified["status"] == "certified"
+    assert certified["decided_at"]
+    assert certified["version"] == 2
     assert nina.post(path, json=body).status_code == 409
+    revoke = nina.post(
+        path,
+        json={
+            "decision": "revoke",
+            "reason": "The entitlement is no longer needed",
+            "expected_version": certified["version"],
+        },
+    )
+    assert revoke.status_code == 409
+    assert revoke.json()["error"] == "invalid_transition"
+    assert db_rows(
+        db_path, "SELECT status FROM entitlements WHERE id='ENT-002'"
+    )[0]["status"] == "certified"
 
     reviewer = login(TestClient(client.app), "rita.reviewer")
     assert reviewer.post(path, json=body).status_code == 403
@@ -403,6 +427,86 @@ def test_import_dry_run_reports_sample_errors_and_writes_nothing(client, db_path
     assert db_rows(db_path, "SELECT COUNT(*) AS n FROM claims")[0]["n"] == before_claims
     assert db_rows(db_path, "SELECT COUNT(*) AS n FROM audit_events")[0]["n"] == before_audit
     assert db_rows(db_path, "SELECT COUNT(*) AS n FROM control_events")[0]["n"] == before_controls
+
+
+@pytest.mark.parametrize("amount", ["10.009", "NaN", "Infinity"])
+def test_claim_import_rejects_fractional_cents_and_nonfinite_amounts(client, amount):
+    claims_operator = login(client, "colin.claims")
+    content = (
+        "id,counterparty_id,claimant_ref,claim_type,description,amount,currency,submitted_at\n"
+        f"CLM-BAD-AMOUNT,CP-001,CUST-9999,merchant dispute,Test claim,{amount},GBP,2026-10-15\n"
+    )
+    response = upload_csv_content(
+        claims_operator, "claims", "bad-amount.csv", content
+    )
+    assert response.status_code == 200
+    result = response.json()
+    assert result["committed"] is False
+    assert result["valid"] == 0
+    assert any(
+        error["row"] == 2 and error["column"] == "amount"
+        for error in result["errors"]
+    )
+
+
+def test_claim_import_converts_decimal_amount_to_minor_units_exactly(client, db_path):
+    claims_operator = login(client, "colin.claims")
+    content = (
+        "id,counterparty_id,claimant_ref,claim_type,description,amount,currency,submitted_at\n"
+        "CLM-EXACT-AMOUNT,CP-001,CUST-9998,merchant dispute,Test claim,10.01,GBP,2026-10-15\n"
+    )
+    response = upload_csv_content(
+        claims_operator, "claims", "exact-amount.csv", content, dry_run=False
+    )
+    assert response.status_code == 200
+    assert response.json() == {
+        "rows": 1,
+        "valid": 1,
+        "errors": [],
+        "committed": True,
+    }
+    assert db_rows(
+        db_path,
+        "SELECT amount_minor FROM claims WHERE id='CLM-EXACT-AMOUNT'",
+    )[0]["amount_minor"] == 1001
+
+
+def test_import_rejects_unknown_columns_and_extra_csv_fields(client, db_path):
+    reviewer = login(client, "rita.reviewer")
+    before_counterparties = db_rows(
+        db_path, "SELECT COUNT(*) AS n FROM counterparties"
+    )[0]["n"]
+    headers = (
+        "id,name,kind,country,registration_number,risk_tier,assigned_reviewer,submitted_at"
+    )
+    row = "CP-IMPORT-EXTRA,Example Mutual,insurer,United Kingdom,GB-100,low,rita.reviewer,2026-10-15"
+
+    unknown_column = upload_csv_content(
+        reviewer,
+        "counterparties",
+        "unknown-column.csv",
+        f"{headers},unexpected\n{row},extra\n",
+    ).json()
+    assert any(
+        error["row"] == 1 and error["column"] == "unexpected"
+        for error in unknown_column["errors"]
+    )
+    assert unknown_column["committed"] is False
+
+    extra_field = upload_csv_content(
+        reviewer,
+        "counterparties",
+        "extra-field.csv",
+        f"{headers}\n{row},extra\n",
+    ).json()
+    assert any(
+        error["row"] == 2 and error["column"] == "row"
+        for error in extra_field["errors"]
+    )
+    assert extra_field["committed"] is False
+    assert db_rows(
+        db_path, "SELECT COUNT(*) AS n FROM counterparties"
+    )[0]["n"] == before_counterparties
 
 
 def test_valid_import_commits_all_rows_and_one_audit_event(client, db_path):
@@ -524,3 +628,21 @@ def test_metrics_shape_and_claim_values_remain_separated_by_currency(client, db_
     assert metrics["claims"]["open_value_by_currency"] == expected_values
     assert set(expected_values) == {"EUR", "GBP", "USD"}
     assert "total" not in metrics["claims"]["open_value_by_currency"]
+
+
+def test_flags_export_does_not_increase_flag_change_metric(client):
+    flag_operator = login(client, "fiona.flags")
+    before = flag_operator.get("/api/metrics").json()["flags"]["changes_30d"]
+    assert flag_operator.get("/api/export/flags.csv").status_code == 200
+    after_export = flag_operator.get("/api/metrics").json()["flags"]["changes_30d"]
+    assert after_export == before
+    changed = flag_operator.post(
+        "/api/flags/claims.fast_track_travel/change",
+        json={
+            "enabled": True,
+            "reason": "Enable the reviewed travel workflow",
+            "expected_version": 1,
+        },
+    )
+    assert changed.status_code == 200
+    assert flag_operator.get("/api/metrics").json()["flags"]["changes_30d"] == before + 1

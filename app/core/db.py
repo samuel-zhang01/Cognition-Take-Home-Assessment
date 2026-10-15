@@ -110,6 +110,114 @@ CREATE INDEX IF NOT EXISTS idx_control_events_at
     ON control_events(at);
 """
 
+MISSING_COLUMNS = {
+    "counterparties": {
+        "country": "TEXT NOT NULL DEFAULT 'Unknown'",
+        "registration_number": "TEXT NOT NULL DEFAULT 'Not recorded'",
+        "risk_tier": "TEXT NOT NULL DEFAULT 'unknown'",
+        "assigned_reviewer": "TEXT NOT NULL DEFAULT 'Unassigned'",
+        "submitted_at": "TEXT NOT NULL DEFAULT ''",
+        "decided_at": "TEXT",
+    },
+    "claims": {
+        "claim_type": "TEXT NOT NULL DEFAULT 'unknown'",
+        "submitted_at": "TEXT NOT NULL DEFAULT ''",
+        "decided_at": "TEXT",
+    },
+    "flags": {
+        "environment": "TEXT NOT NULL DEFAULT 'staging'",
+        "owner_team": "TEXT NOT NULL DEFAULT 'Unassigned'",
+    },
+    "audit_events": {"details": "TEXT"},
+}
+
+REQUIRED_COLUMNS = {
+    "users": {"id", "username", "display_name", "role", "password_salt", "password_hash"},
+    "sessions": {"token", "user_id", "created_at"},
+    "counterparties": {
+        "id", "name", "kind", "country", "registration_number", "risk_tier",
+        "assigned_reviewer", "status", "submitted_at", "decided_at", "version", "updated_at",
+    },
+    "counterparty_evidence": {
+        "id", "counterparty_id", "evidence_type", "source", "value", "as_of",
+    },
+    "claims": {
+        "id", "counterparty_id", "claimant_ref", "claim_type", "description",
+        "amount_minor", "currency", "status", "submitted_at", "decided_at", "version",
+        "updated_at",
+    },
+    "flags": {
+        "key", "description", "enabled", "environment", "owner_team", "version", "updated_at",
+    },
+    "entitlements": {
+        "id", "employee", "team", "system", "access_level", "last_used_at", "quarter",
+        "status", "decided_at", "version", "updated_at",
+    },
+    "audit_events": {
+        "id", "at", "actor_username", "actor_role", "module", "resource_type",
+        "resource_id", "action", "reason", "before_json", "after_json", "resource_version",
+        "details",
+    },
+    "control_events": {
+        "id", "at", "actor_username", "actor_role", "module", "resource_id", "outcome",
+    },
+}
+
+
+def _table_columns(conn, table):
+    return {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
+
+
+def _migrate_schema(conn):
+    for table, additions in MISSING_COLUMNS.items():
+        columns = _table_columns(conn, table)
+        for name, definition in additions.items():
+            if name not in columns:
+                conn.execute(
+                    f"ALTER TABLE {table} ADD COLUMN {name} {definition}"
+                )
+
+    counterparty_columns = _table_columns(conn, "counterparties")
+    if "market" in counterparty_columns:
+        conn.execute(
+            """UPDATE counterparties
+               SET country = CASE UPPER(market)
+                   WHEN 'UK' THEN 'United Kingdom'
+                   WHEN 'US' THEN 'United States'
+                   WHEN 'EU' THEN 'Unknown'
+                   ELSE COALESCE(NULLIF(market, ''), 'Unknown')
+               END
+               WHERE country = 'Unknown'"""
+        )
+    conn.execute(
+        """UPDATE counterparties SET submitted_at = updated_at
+           WHERE submitted_at = ''"""
+    )
+    conn.execute(
+        """UPDATE counterparties SET decided_at = updated_at
+           WHERE decided_at IS NULL AND status NOT IN ('pending', 'pending_review')"""
+    )
+    conn.execute(
+        """UPDATE claims SET submitted_at = updated_at
+           WHERE submitted_at = ''"""
+    )
+    conn.execute(
+        "UPDATE claims SET status = 'approved' WHERE status = 'approved_simulated'"
+    )
+    conn.execute(
+        """UPDATE claims SET decided_at = updated_at
+           WHERE decided_at IS NULL AND status IN ('approved', 'rejected')"""
+    )
+
+    for table, required in REQUIRED_COLUMNS.items():
+        missing = required - _table_columns(conn, table)
+        if missing:
+            names = ", ".join(sorted(missing))
+            raise RuntimeError(
+                f"Existing table {table!r} is missing required columns: {names}. "
+                "Back up the database; to start fresh, delete data/portal.db and reseed."
+            )
+
 
 def connect(db_path):
     path = str(db_path)
@@ -123,8 +231,16 @@ def connect(db_path):
 
 
 def init_db(db_path):
-    with connect(db_path) as conn:
-        conn.executescript(SCHEMA)
+    try:
+        with connect(db_path) as conn:
+            conn.executescript(SCHEMA)
+            with transaction(conn):
+                _migrate_schema(conn)
+    except sqlite3.Error as exc:
+        raise RuntimeError(
+            "The existing portal database could not be migrated in place. "
+            "Back up the database; to start fresh, delete data/portal.db and reseed."
+        ) from exc
 
 
 @contextmanager

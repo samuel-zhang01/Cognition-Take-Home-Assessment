@@ -58,7 +58,8 @@ def collect_metrics(conn):
         "SELECT COUNT(*) FROM flags WHERE environment = 'production'"
     ).fetchone()[0]
     changes_30d = conn.execute(
-        "SELECT COUNT(*) FROM audit_events WHERE module = 'flags' AND at >= ?",
+        "SELECT COUNT(*) FROM audit_events WHERE module = 'flags' "
+        "AND action = 'change_enabled' AND at >= ?",
         (cutoff,),
     ).fetchone()[0]
     entitlements = {

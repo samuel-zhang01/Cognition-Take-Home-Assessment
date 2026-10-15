@@ -54,9 +54,7 @@ def decide_access(
     user=Depends(require_permission("access_reviews.decide")),
 ):
     def apply(row):
-        if row["status"] == "revoked" or (
-            row["status"] == "certified" and body.decision == "certify"
-        ):
+        if row["status"] != "pending":
             raise InvalidTransition("This access review has already been decided")
         return {
             "status": "certified" if body.decision == "certify" else "revoked",
