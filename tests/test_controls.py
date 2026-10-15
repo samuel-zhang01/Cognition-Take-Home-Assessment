@@ -77,12 +77,8 @@ def test_each_role_can_make_its_happy_path_change_and_auditor_sees_it(client):
 
     auditor = login(TestClient(client.app), "aaron.auditor")
     events = auditor.get("/api/audit").json()
-    usernames = {
-        row["id"]: row["username"]
-        for row in db_rows(db_path_for_client(client), "SELECT id, username FROM users")
-    }
     assert {
-        (usernames[int(item["actor_user_id"])], item["module"]) for item in events
+        (item["actor_username"], item["module"]) for item in events
     } == {
         ("rita.reviewer", "counterparties"),
         ("colin.claims", "claims"),
@@ -133,10 +129,6 @@ def test_forbidden_mutations_do_not_change_state_or_audit(app, client, db_path):
     ).status_code == 403
 
 
-def db_path_for_client(client):
-    return client.app.state.db_path
-
-
 def test_forged_identity_is_ignored_and_missing_session_is_unauthorized(client, db_path):
     claims_operator = login(client, "colin.claims")
     response = claims_operator.post(
@@ -150,11 +142,7 @@ def test_forged_identity_is_ignored_and_missing_session_is_unauthorized(client, 
         },
     )
     assert response.status_code == 200
-    event = db_rows(
-        db_path,
-        """SELECT users.username AS actor_username, audit_events.actor_role
-           FROM audit_events JOIN users ON users.id = audit_events.actor_user_id""",
-    )[0]
+    event = db_rows(db_path, "SELECT actor_username, actor_role FROM audit_events")[0]
     assert event == {"actor_username": "colin.claims", "actor_role": "claims_operator"}
 
     unauthenticated = TestClient(client.app)

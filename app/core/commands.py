@@ -104,7 +104,7 @@ def run_command(
         )
         write_audit(
             conn,
-            actor_user_id=user["id"],
+            actor_username=user["username"],
             actor_role=user["role"],
             module=module,
             resource_type=resource_type,

@@ -7,7 +7,7 @@ from app.core.permissions import AUDIT_SCOPE
 def write_audit(
     conn,
     *,
-    actor_user_id,
+    actor_username,
     actor_role,
     module,
     resource_type,
@@ -20,12 +20,12 @@ def write_audit(
 ):
     conn.execute(
         """INSERT INTO audit_events
-           (at, actor_user_id, actor_role, module, resource_type, resource_id,
+           (at, actor_username, actor_role, module, resource_type, resource_id,
             action, reason, before_json, after_json, resource_version)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             utc_now(),
-            str(actor_user_id),
+            actor_username,
             actor_role,
             module,
             resource_type,

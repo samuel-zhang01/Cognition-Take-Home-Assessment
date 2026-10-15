@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS flags (
 CREATE TABLE IF NOT EXISTS audit_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     at TEXT NOT NULL,
-    actor_user_id TEXT NOT NULL,
+    actor_username TEXT NOT NULL,
     actor_role TEXT NOT NULL,
     module TEXT NOT NULL,
     resource_type TEXT NOT NULL,
