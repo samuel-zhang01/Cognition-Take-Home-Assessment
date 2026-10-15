@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Delivery log · Operations Portal{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><h1>Delivery log</h1><p>Two measured rounds of accepted work and checks.</p></div>
+</div>
+<section class="kpi-grid">
+  <article class="kpi-card"><div class="kpi-label">Rounds</div><div class="metric-value">{{ summary.rounds }}</div><div class="kpi-sub">accepted work rounds</div></article>
+  <article class="kpi-card"><div class="kpi-label">Total wall-clock</div><div class="metric-value">{{ summary.total_wall_clock_minutes }}</div><div class="kpi-sub">minutes, rounded</div></article>
+  <article class="kpi-card"><div class="kpi-label">Tests passing</div><div class="metric-value">{{ summary.tests_passing }}</div><div class="kpi-sub">latest full suite</div></article>
+</section>
+<p class="muted">Rounds were timed from brief to last commit. Commits were batched, so per-commit timing is not meaningful.</p>
+{% for round in rounds %}
+<section class="panel delivery-round">
+  <div class="page-heading"><div><h2>{{ round.name }}</h2><p><span class="date-cell">{{ round.start|datetime }}</span> to <span class="date-cell">{{ round.end|datetime }}</span></p></div><strong>{{ round.wall_clock_minutes|round|int }} min wall-clock</strong></div>
+  <p class="muted">Human time: Not measured</p>
+  <div class="table-wrap"><table><thead><tr><th>Commit</th><th>Summary</th><th>Time</th></tr></thead><tbody>
+    {% for commit in round.commits %}<tr><td class="id">{{ commit.hash }}</td><td>{{ commit.summary }}</td><td class="date-cell">{{ commit.time|datetime }}</td></tr>{% endfor %}
+  </tbody></table></div>
+  <h3>Checks</h3><ul class="checks-list">{% for check in round.checks %}<li>{{ check }}</li>{% endfor %}</ul>
+</section>
+{% endfor %}
+{% endblock %}

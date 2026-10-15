@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Access reviews · Operations Portal{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><h1>Access reviews</h1><p>Certify or revoke employee access for {{ entitlements[0].quarter if entitlements else "2026-Q4" }}.</p></div>
+  <div class="page-actions"><a class="button secondary" href="/api/export/access_reviews.csv">Export CSV</a></div>
+</div>
+<div class="filters">
+  <label>Status<select onchange="location.href='?status='+encodeURIComponent(this.value)"><option value="">All statuses</option>{% for value in ["pending", "certified", "revoked"] %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ value|title }}</option>{% endfor %}</select></label>
+  <label class="search-box">Search<input type="search" data-table-search placeholder="Employee, system, team"></label>
+</div>
+<div class="table-wrap"><table><thead><tr><th>Record</th><th>Employee and team</th><th>System</th><th>Access level</th><th>Last used</th><th>Quarter</th><th>Status</th></tr></thead>
+  <tbody>{% for entitlement in entitlements %}
+  <tr data-href="/access-reviews/{{ entitlement.id }}"><td><a href="/access-reviews/{{ entitlement.id }}" class="id">{{ entitlement.id }}</a></td><td>{{ entitlement.employee }}<small class="sub">{{ entitlement.team }}</small></td><td>{{ entitlement.system }}</td><td>{{ entitlement.access_level }}</td><td class="date-cell">{{ entitlement.last_used_at|datetime }}</td><td>{{ entitlement.quarter }}</td><td><span class="status {{ entitlement.status }}">{{ entitlement.status|title }}</span></td></tr>
+  {% else %}<tr><td colspan="7">No access reviews match this filter.</td></tr>
+  {% endfor %}</tbody>
+</table></div>
+{% endblock %}

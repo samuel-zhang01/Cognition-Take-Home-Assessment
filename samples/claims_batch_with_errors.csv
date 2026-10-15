@@ -1,0 +1,6 @@
+id,counterparty_id,claimant_ref,claim_type,description,amount,currency,submitted_at
+CLM-BATCH-001,CP-001,CUST-9101,travel disruption,Hotel after cancellation,185.00,GBP,2026-10-15
+CLM-BATCH-002,CP-002,CUST-9102,device damage,Phone screen repair,249.50,EUR,2026-10-14
+CLM-BATCH-003,CP-UNKNOWN,CUST-9103,card fraud refund,Unauthorised card purchase,79.99,USD,2026-10-13
+CLM-BATCH-004,CP-004,CUST-9104,duplicate charge refund,Repeated subscription billing,not-a-number,GBP,2026-10-12
+CLM-BATCH-005,CP-005,CUST-9105,merchant dispute,Service not received,42.00,EUR,2026-10-11

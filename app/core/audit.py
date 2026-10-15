@@ -17,12 +17,13 @@ def write_audit(
     before,
     after,
     resource_version,
+    details=None,
 ):
     conn.execute(
         """INSERT INTO audit_events
            (at, actor_username, actor_role, module, resource_type, resource_id,
-            action, reason, before_json, after_json, resource_version)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            action, reason, before_json, after_json, resource_version, details)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             utc_now(),
             actor_username,
@@ -35,6 +36,7 @@ def write_audit(
             json.dumps(before, sort_keys=True),
             json.dumps(after, sort_keys=True),
             resource_version,
+            json.dumps(details, sort_keys=True) if details is not None else None,
         ),
     )
 
@@ -55,5 +57,5 @@ def list_audit(conn, user, module=None, resource_id=None):
     if resource_id:
         query += " AND resource_id = ?"
         args.append(resource_id)
-    query += " ORDER BY id DESC"
+    query += " ORDER BY at DESC, id DESC"
     return [dict(row) for row in conn.execute(query, args).fetchall()]

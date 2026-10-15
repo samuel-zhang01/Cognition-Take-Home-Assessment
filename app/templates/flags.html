@@ -1,19 +1,29 @@
 {% extends "base.html" %}
 {% block title %}Feature flags{% endblock %}
 {% block content %}
-<div class="page-heading"><div><p class="eyebrow">Proxy for feature-flag admin</p><h1>Feature flags</h1></div></div>
-<p class="notice">Demo-only flag values. Every change requires a reason and is written to the shared audit log.</p>
+<div class="page-heading">
+  <div><h1>Feature flags</h1><p>Review environment, owner team, and recent changes.</p></div>
+  <div class="page-actions"><a class="button secondary" href="/api/export/flags.csv">Export CSV</a></div>
+</div>
+{% if "flag.change" not in permissions %}<p class="read-only-notice">You have read-only access.</p>{% endif %}
+<div class="filters">
+  <label>Status<select onchange="location.href='?status='+encodeURIComponent(this.value)"><option value="">All statuses</option><option value="on" {% if selected_status == "on" %}selected{% endif %}>On</option><option value="off" {% if selected_status == "off" %}selected{% endif %}>Off</option></select></label>
+  <label class="search-box">Search<input type="search" data-table-search placeholder="Flag, team, environment"></label>
+</div>
 <div class="flag-list">{% for flag in flags %}
-  <article class="panel flag-row">
-    <div><h2><code>{{ flag.key }}</code></h2><p>{{ flag.description }}</p><span class="status">{{ "Enabled" if flag.enabled else "Disabled" }}</span></div>
+  <article class="panel flag-row{% if 'flag.change' not in permissions %} read-only{% endif %}">
+    <div><h2><code>{{ flag.key }}</code></h2><p>{{ flag.description }}</p>
+      <div class="flag-meta"><span class="status {{ 'on' if flag.enabled else 'off' }}">{{ "On" if flag.enabled else "Off" }}</span><span class="tag">{{ flag.environment|title }}</span><span class="tag">{{ flag.owner_team }}</span></div>
+      <p class="sub">{% if flag.last_changed_at %}Last changed by {{ flag.last_changed_by }} on <span class="date-cell">{{ flag.last_changed_at|datetime }}</span>. {{ flag.last_change_reason }}{% else %}No recorded changes.{% endif %} <a href="/audit?module=flags&resource_id={{ flag.key }}">View history</a></p>
+    </div>
     {% if "flag.change" in permissions %}
     <form class="command-form compact-form" data-endpoint="/api/flags/{{ flag.key }}/change">
       <input type="hidden" name="expected_version" value="{{ flag.version }}">
-      <label>Reason<textarea name="reason" minlength="3" maxlength="500" required></textarea></label>
+      <label>Reason<textarea name="reason" minlength="3" maxlength="500" placeholder="Reason (recorded in the audit log)" required></textarea></label>
       <button type="submit">Turn {{ "off" if flag.enabled else "on" }}</button><p class="form-message" aria-live="polite"></p>
       <input type="hidden" name="enabled" value="{{ 'false' if flag.enabled else 'true' }}">
     </form>
     {% endif %}
   </article>
-{% endfor %}</div>
+{% else %}<div class="panel muted">No flags match this filter.</div>{% endfor %}</div>
 {% endblock %}

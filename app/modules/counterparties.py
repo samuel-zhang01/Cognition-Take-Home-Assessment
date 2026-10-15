@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, ConfigDict
 from typing import Literal
 
-from app.core.auth import get_connection
+from app.core.auth import get_connection, utc_now
 from app.core.audit import list_audit
 from app.core.commands import InvalidTransition, run_command
 from app.core.permissions import ROLE_PERMISSIONS
@@ -21,20 +21,30 @@ class ReviewRequest(BaseModel):
     expected_version: int
 
 
-def list_counterparties(conn):
+def list_counterparties(conn, status=None):
+    status_filter = " WHERE c.status = ?" if status else ""
+    args = (status,) if status else ()
     return [
         dict(row)
         for row in conn.execute(
-            """SELECT c.*, COUNT(cl.id) AS linked_claims
-               FROM counterparties c LEFT JOIN claims cl ON cl.counterparty_id = c.id
-               GROUP BY c.id ORDER BY c.id"""
+            f"""SELECT c.*, reviewer.display_name AS assigned_reviewer_display,
+                       COUNT(cl.id) AS linked_claims
+                FROM counterparties c LEFT JOIN claims cl ON cl.counterparty_id = c.id
+                LEFT JOIN users reviewer ON reviewer.username = c.assigned_reviewer
+                {status_filter}
+                GROUP BY c.id, reviewer.display_name ORDER BY c.id""",
+            args,
         ).fetchall()
     ]
 
 
 def get_counterparty(conn, counterparty_id):
     row = conn.execute(
-        "SELECT * FROM counterparties WHERE id = ?", (counterparty_id,)
+        """SELECT c.*, reviewer.display_name AS assigned_reviewer_display
+           FROM counterparties c LEFT JOIN users reviewer
+             ON reviewer.username = c.assigned_reviewer
+           WHERE c.id = ?""",
+        (counterparty_id,),
     ).fetchone()
     if not row:
         return None
@@ -59,10 +69,11 @@ def get_counterparty(conn, counterparty_id):
 
 @router.get("/api/counterparties")
 def api_counterparties(
+    status: str | None = None,
     conn=Depends(get_connection),
     user=Depends(require_permission("counterparty.read")),
 ):
-    return list_counterparties(conn)
+    return list_counterparties(conn, status)
 
 
 @router.get("/api/counterparties/{counterparty_id}")
@@ -89,7 +100,10 @@ def review_counterparty(
     def apply(row):
         if row["status"] != "pending_review":
             raise InvalidTransition("Only pending counterparties can be reviewed")
-        return {"status": "approved" if body.decision == "approve" else "rejected"}
+        return {
+            "status": "approved" if body.decision == "approve" else "rejected",
+            "decided_at": utc_now(),
+        }
 
     return run_command(
         conn,
@@ -108,7 +122,9 @@ def review_counterparty(
 
 
 @router.get("/counterparties")
-def counterparties_page(request: Request, conn=Depends(get_connection)):
+def counterparties_page(
+    request: Request, status: str | None = None, conn=Depends(get_connection)
+):
     user = page_user(request, conn)
     if user is None:
         return RedirectResponse("/login", status_code=303)
@@ -117,7 +133,8 @@ def counterparties_page(request: Request, conn=Depends(get_connection)):
         "counterparties.html",
         user=user,
         permissions=ROLE_PERMISSIONS[user["role"]],
-        counterparties=list_counterparties(conn),
+        counterparties=list_counterparties(conn, status),
+        selected_status=status or "",
     )
 
 

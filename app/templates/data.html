@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Import & export · Operations Portal{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><h1>Import & export</h1><p>Validate a batch before committing it. Each committed import and export is audited.</p></div>
+</div>
+<section class="cards">
+  {% for spec in import_specs %}
+  <article class="panel import-card">
+    <div><h2>{{ spec.module|replace("_", " ")|title }}</h2><a href="/api/import/{{ spec.module }}/template.csv">Download template</a></div>
+    <form class="import-form" data-module="{{ spec.module }}" enctype="multipart/form-data">
+      <label>CSV file<input type="file" name="file" accept=".csv,text/csv" required></label>
+      <label>Reason<textarea name="reason" minlength="3" maxlength="500" placeholder="Reason recorded in the audit log" required></textarea></label>
+      <input type="hidden" name="dry_run" value="true">
+      <div class="import-actions">
+        <button type="button" class="validate-import">Validate</button>
+        <button type="button" class="commit-import" disabled>Import 0 rows</button>
+      </div>
+      <div class="validation-result" role="status"></div>
+      <div class="validation-errors" hidden>
+        <div class="table-wrap"><table class="error-table"><thead><tr><th>Row</th><th>Column</th><th>Error</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </form>
+  </article>
+  {% else %}
+  <div class="panel"><p class="muted">You have read-only access to import tools.</p></div>
+  {% endfor %}
+</section>
+<section class="panel dashboard-section">
+  <h2>Export data</h2>
+  <p class="muted">Exported files contain the records available in this portal.</p>
+  <div class="page-actions">
+    {% for module in export_modules %}<a class="button secondary" href="/api/export/{{ module }}.csv">{{ module|replace("_", " ")|title }} CSV</a>{% endfor %}
+    <a class="button secondary" href="/api/export/audit.csv">Audit CSV</a><a class="button secondary" href="/api/export/audit.json">Audit JSON</a>
+  </div>
+</section>
+{% endblock %}

@@ -1,12 +1,19 @@
 {% extends "base.html" %}
-{% block title %}Claims{% endblock %}
+{% block title %}Claims & refunds{% endblock %}
 {% block content %}
-<div class="page-heading"><div><p class="eyebrow">Proxy for refunds dashboard</p><h1>Claims</h1></div></div>
-<p class="notice"><strong>Simulated approval — no money moves; not settlement.</strong> Counterparty status is shown as context only and does not determine claim approval.</p>
+<div class="page-heading">
+  <div><h1>Claims & refunds</h1><p>Review customer claims and record a decision.</p></div>
+  <div class="page-actions"><a class="button secondary" href="/api/export/claims.csv">Export CSV</a></div>
+</div>
+<div class="filters">
+  <label>Status<select onchange="location.href='?status='+encodeURIComponent(this.value)"><option value="">All statuses</option>{% for value in ["submitted", "approved", "rejected"] %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ value|title }}</option>{% endfor %}</select></label>
+  <label class="search-box">Search<input type="search" data-table-search placeholder="Claim, customer, type"></label>
+</div>
 <div class="table-wrap"><table>
-  <thead><tr><th>Claim</th><th>Counterparty</th><th>Amount</th><th>Status</th><th>Counterparty context</th></tr></thead>
+  <thead><tr><th>Claim</th><th>Type</th><th>Counterparty</th><th>Amount</th><th>Status</th><th>Submitted</th></tr></thead>
   <tbody>{% for claim in claims %}
-  <tr><td><a href="/claims/{{ claim.id }}">{{ claim.id }}</a><small class="sub">{{ claim.claimant_ref }}</small></td><td><a href="/counterparties/{{ claim.counterparty_id }}">{{ claim.counterparty_name }}</a></td><td>{{ claim.currency }} {{ "%.2f"|format(claim.amount_minor / 100) }}</td><td><span class="status {{ claim.status }}">{{ claim.status|replace("_", " ") }}</span></td><td>{{ claim.counterparty_status|replace("_", " ") }}</td></tr>
+  <tr data-href="/claims/{{ claim.id }}"><td><a href="/claims/{{ claim.id }}" class="id">{{ claim.id }}</a><small class="sub">{{ claim.claimant_ref }}</small></td><td>{{ claim.claim_type|title }}</td><td><a href="/counterparties/{{ claim.counterparty_id }}">{{ claim.counterparty_name }}</a></td><td class="number">{{ claim.currency }} {{ "%.2f"|format(claim.amount_minor / 100) }}</td><td><span class="status {{ claim.status }}">{{ claim.status|title }}</span></td><td class="date-cell">{{ claim.submitted_at|datetime }}</td></tr>
+  {% else %}<tr><td colspan="6">No claims match this filter.</td></tr>
   {% endfor %}</tbody>
 </table></div>
 {% endblock %}

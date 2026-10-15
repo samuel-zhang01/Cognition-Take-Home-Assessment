@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}App catalog · Operations Portal{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><h1>App catalog</h1><p>Four operational apps share authentication, permissions, persistence, and audit history.</p></div>
+</div>
+<section class="cards">
+  {% for app in apps %}
+  <article class="card">
+    <div class="card-meta"><span>{{ app.spec.owner }}</span></div>
+    <h2><a href="{{ app.spec.path }}">{{ app.spec.title }}</a></h2>
+    <p class="build-round">{% if app.round_number == 2 %}Built in round 2 by following the module guide{% else %}Built in round 1 with the shared foundation (about {{ first_round_minutes }} min){% endif %}</p>
+    <p>{{ app.spec.description }}</p>
+    <div class="card-meta"><strong>Replaces</strong><span>{{ app.spec.replaces }}</span></div>
+    <div class="control-chips">{% for control in app.spec.controls %}<span class="control-chip">{{ control }}</span>{% endfor %}</div>
+    <div class="card-meta"><span>{{ app.loc }} lines of code</span><span>{{ app.spec.source_files|length }} source files</span></div>
+  </article>
+  {% endfor %}
+</section>
+<section class="panel dashboard-section">
+  <h2>How a new app is added</h2>
+  <ol class="link-list">
+    <li>Add a versioned table and seed records. Set role permissions and audit scope, and add a demo account when the module has its own role.</li>
+    <li>Create a router with permission-checked reads and mutations through <code>run_command</code>. Register the router and <code>ModuleSpec</code>.</li>
+    <li>Add templates and forms, then test allowed actions, denied roles, reasons, stale versions, and any import or export behavior.</li>
+  </ol>
+  <h3>Access Reviews module specification</h3>
+  <pre class="code-block"><code>ModuleSpec(
+    key="access_reviews",
+    title="Access reviews",
+    path="/access-reviews",
+    description="Review employee access to business systems for the current quarter.",
+    owner="Nina Okafor",
+    replaces="New: planned tool 4 of 10+",
+    controls=("permissions", "reason", "version check", "audit", "import", "export"),
+    source_files=(
+        "app/modules/access_reviews.py",
+        "app/templates/access_reviews.html",
+        "app/templates/access_review_detail.html",
+    ),
+)</code></pre>
+  <h3>Access Reviews permissions</h3>
+  <pre class="code-block"><code>"access_reviewer": {
+    "modules.read",
+    "access_reviews.decide",
+    "access_reviews.import",
+}
+AUDIT_SCOPE["access_reviewer"] = {"access_reviews"}</code></pre>
+  <p>Added in round 2 ({{ second_round_minutes }}-minute round, which also delivered import/export, the dashboard and auth hardening). {{ access_build.diff_stat }}</p>
+</section>
+{% endblock %}

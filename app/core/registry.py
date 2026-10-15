@@ -8,40 +8,89 @@ class ModuleSpec:
     path: str
     description: str
     owner: str
-    proxy_for: str
+    replaces: str
+    controls: tuple[str, ...]
+    source_files: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class NavItem:
+    key: str
+    title: str
+    path: str
 
 
 MODULES = (
     ModuleSpec(
-        "counterparties",
-        "Insurance counterparties",
-        "/counterparties",
-        "Review synthetic insurer and claims-provider evidence for a fintech KYC queue.",
-        "Reviewer",
-        "KYC review queue",
+        key="counterparties",
+        title="Counterparty reviews",
+        path="/counterparties",
+        description="Review financial-strength and payout evidence for onboarding decisions.",
+        owner="Rita Patel",
+        replaces="Power Apps KYC review queue",
+        controls=("permissions", "reason", "version check", "audit", "import", "export"),
+        source_files=(
+            "app/modules/counterparties.py",
+            "app/templates/counterparties.html",
+            "app/templates/counterparty_detail.html",
+        ),
     ),
     ModuleSpec(
-        "claims",
-        "Claims",
-        "/claims",
-        "Inspect and simulate approval of synthetic claims in a refunds workflow.",
-        "Claims operator",
-        "Refunds dashboard",
+        key="claims",
+        title="Claims & refunds",
+        path="/claims",
+        description="Review customer claims and record an approve or reject decision.",
+        owner="Colin Murray",
+        replaces="Power Apps refunds dashboard",
+        controls=("permissions", "reason", "version check", "audit", "import", "export"),
+        source_files=(
+            "app/modules/claims.py",
+            "app/templates/claims.html",
+            "app/templates/claim_detail.html",
+        ),
     ),
     ModuleSpec(
-        "flags",
-        "Feature flags",
-        "/flags",
-        "Change demonstration feature flags with a reason and an audit trail.",
-        "Flag operator",
-        "Feature-flag admin",
+        key="flags",
+        title="Feature flags",
+        path="/flags",
+        description="Review environment-level flags with owner and change history.",
+        owner="Fiona Grant",
+        replaces="Power Apps feature-flag admin",
+        controls=("permissions", "reason", "version check", "audit", "export"),
+        source_files=("app/modules/flags.py", "app/templates/flags.html"),
     ),
     ModuleSpec(
-        "audit",
-        "Shared audit",
-        "/audit",
-        "Review the shared, role-scoped history of operational changes.",
-        "Auditor",
-        "Cross-tool audit (shared foundation)",
+        key="access_reviews",
+        title="Access reviews",
+        path="/access-reviews",
+        description="Review employee access to business systems for the current quarter.",
+        owner="Nina Okafor",
+        replaces="New: planned tool 4 of 10+",
+        controls=("permissions", "reason", "version check", "audit", "import", "export"),
+        source_files=(
+            "app/modules/access_reviews.py",
+            "app/templates/access_reviews.html",
+            "app/templates/access_review_detail.html",
+        ),
+    ),
+)
+
+NAV_GROUPS = (
+    (
+        "Overview",
+        (
+            NavItem("dashboard", "Dashboard", "/"),
+            NavItem("business-case", "Business case", "/business-case"),
+            NavItem("delivery", "Delivery log", "/delivery"),
+            NavItem("apps", "App catalog", "/apps"),
+        ),
+    ),
+    ("Apps", tuple(NavItem(module.key, module.title, module.path) for module in MODULES)),
+    (
+        "Data",
+        (
+            NavItem("data", "Import & export", "/data"),
+            NavItem("audit", "Audit log", "/audit"),
+        ),
     ),
 )

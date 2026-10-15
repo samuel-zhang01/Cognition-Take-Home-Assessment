@@ -22,8 +22,13 @@ CREATE TABLE IF NOT EXISTS counterparties (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     kind TEXT NOT NULL,
-    market TEXT NOT NULL,
+    country TEXT NOT NULL,
+    registration_number TEXT NOT NULL,
+    risk_tier TEXT NOT NULL,
+    assigned_reviewer TEXT NOT NULL,
     status TEXT NOT NULL,
+    submitted_at TEXT NOT NULL,
+    decided_at TEXT,
     version INTEGER NOT NULL DEFAULT 1,
     updated_at TEXT NOT NULL
 );
@@ -32,20 +37,20 @@ CREATE TABLE IF NOT EXISTS counterparty_evidence (
     counterparty_id TEXT NOT NULL REFERENCES counterparties(id) ON DELETE CASCADE,
     evidence_type TEXT NOT NULL,
     source TEXT NOT NULL,
-    source_type TEXT NOT NULL,
-    rated_entity_or_market TEXT NOT NULL,
     value TEXT NOT NULL,
-    as_of TEXT NOT NULL,
-    provenance TEXT NOT NULL
+    as_of TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS claims (
     id TEXT PRIMARY KEY,
     counterparty_id TEXT NOT NULL REFERENCES counterparties(id),
     claimant_ref TEXT NOT NULL,
+    claim_type TEXT NOT NULL,
     description TEXT NOT NULL,
     amount_minor INTEGER NOT NULL,
     currency TEXT NOT NULL,
     status TEXT NOT NULL,
+    submitted_at TEXT NOT NULL,
+    decided_at TEXT,
     version INTEGER NOT NULL DEFAULT 1,
     updated_at TEXT NOT NULL
 );
@@ -53,6 +58,21 @@ CREATE TABLE IF NOT EXISTS flags (
     key TEXT PRIMARY KEY,
     description TEXT NOT NULL,
     enabled INTEGER NOT NULL,
+    environment TEXT NOT NULL,
+    owner_team TEXT NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1,
+    updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS entitlements (
+    id TEXT PRIMARY KEY,
+    employee TEXT NOT NULL,
+    team TEXT NOT NULL,
+    system TEXT NOT NULL,
+    access_level TEXT NOT NULL,
+    last_used_at TEXT NOT NULL,
+    quarter TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('pending', 'certified', 'revoked')),
+    decided_at TEXT,
     version INTEGER NOT NULL DEFAULT 1,
     updated_at TEXT NOT NULL
 );
@@ -68,10 +88,26 @@ CREATE TABLE IF NOT EXISTS audit_events (
     reason TEXT NOT NULL,
     before_json TEXT NOT NULL,
     after_json TEXT NOT NULL,
-    resource_version INTEGER NOT NULL
+    resource_version INTEGER NOT NULL,
+    details TEXT
+);
+CREATE TABLE IF NOT EXISTS control_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    at TEXT NOT NULL,
+    actor_username TEXT NOT NULL,
+    actor_role TEXT NOT NULL,
+    module TEXT NOT NULL,
+    resource_id TEXT NOT NULL,
+    outcome TEXT NOT NULL CHECK (
+        outcome IN ('forbidden', 'stale_version', 'invalid_transition', 'validation_failed')
+    )
 );
 CREATE INDEX IF NOT EXISTS idx_audit_module_resource
     ON audit_events(module, resource_id, id);
+CREATE INDEX IF NOT EXISTS idx_audit_module_at
+    ON audit_events(module, at);
+CREATE INDEX IF NOT EXISTS idx_control_events_at
+    ON control_events(at);
 """
 
 

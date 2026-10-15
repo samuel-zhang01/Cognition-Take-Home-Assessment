@@ -1,7 +1,7 @@
 {% if audit %}
-<div class="table-wrap"><table class="audit-table"><thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Resource</th><th>Reason</th></tr></thead><tbody>
+<div class="table-wrap"><table class="audit-table"><thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Resource</th><th>Reason and details</th></tr></thead><tbody>
 {% for event in audit %}
-<tr><td>{{ event.at[0:10] }} {{ event.at[11:19] }} UTC</td><td>{{ event.actor_username }}<small class="sub">{{ event.actor_role }}</small></td><td>{{ event.action }}</td><td><a href="{{ '/flags' if event.module == 'flags' else '/' ~ event.module ~ '/' ~ event.resource_id }}">{{ event.resource_type }} {{ event.resource_id }}</a></td><td>{{ event.reason }}</td></tr>
+<tr><td class="date-cell">{{ event.at|datetime }}</td><td>{{ event.actor_username }}<small class="sub">{{ event.actor_role|replace("_", " ") }}</small></td><td>{{ event.action|replace("_", " ") }}</td><td><a href="{{ '/data' if event.resource_type == 'dataset' else '/audit?module=flags&resource_id=' ~ event.resource_id if event.module == 'flags' else '/access-reviews/' ~ event.resource_id if event.module == 'access_reviews' else '/' ~ event.module ~ '/' ~ event.resource_id }}">{{ event.resource_type }} <span class="id">{{ event.resource_id }}</span></a></td><td>{{ event.reason }}{% if event.details %}<small class="audit-details">{{ event.details }}</small>{% endif %}</td></tr>
 {% endfor %}
 </tbody></table></div>
 {% else %}<p>No audit events available in your scope.</p>{% endif %}
