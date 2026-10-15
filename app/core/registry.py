@@ -75,19 +75,35 @@ MODULES = (
     ),
 )
 
+CORE_MODULES = tuple(module for module in MODULES if module.key != "access_reviews")
+NEW_MODULES = tuple(module for module in MODULES if module.key == "access_reviews")
+
 NAV_GROUPS = (
     (
         "Overview",
         (
             NavItem("dashboard", "Dashboard", "/"),
             NavItem("business-case", "Business case", "/business-case"),
-            NavItem("delivery", "Delivery log", "/delivery"),
-            NavItem("apps", "App catalog", "/apps"),
+            NavItem("security", "Security & controls", "/security"),
         ),
     ),
-    ("Apps", tuple(NavItem(module.key, module.title, module.path) for module in MODULES)),
     (
-        "Data",
+        "Apps",
+        tuple(
+            NavItem(module.key, module.title, module.path)
+            for module in CORE_MODULES
+        ),
+    ),
+    (
+        "New apps",
+        tuple(
+            NavItem(module.key, module.title, module.path)
+            for module in NEW_MODULES
+        )
+        + (NavItem("add-app", "+ Add an app", "/apps#add"),),
+    ),
+    (
+        "Records",
         (
             NavItem("data", "Import & export", "/data"),
             NavItem("audit", "Audit log", "/audit"),

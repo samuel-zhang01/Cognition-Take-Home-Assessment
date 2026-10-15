@@ -678,3 +678,36 @@ def test_flags_export_does_not_increase_flag_change_metric(client):
     )
     assert changed.status_code == 200
     assert flag_operator.get("/api/metrics").json()["flags"]["changes_30d"] == before + 1
+
+
+def test_security_page_shows_production_gaps_to_signed_in_user(client):
+    auditor = login(client, "aaron.auditor")
+
+    response = auditor.get("/security")
+
+    assert response.status_code == 200
+    assert "Needed before production" in response.text
+    assert "PBKDF2-HMAC-SHA256" in response.text
+
+
+def test_delivery_redirects_to_apps_delivery_section(client):
+    auditor = login(client, "aaron.auditor")
+
+    response = auditor.get("/delivery", follow_redirects=False)
+
+    assert response.status_code == 307
+    assert response.headers["location"] == "/apps#delivery"
+
+
+def test_navigation_shows_the_four_requested_groups(client):
+    auditor = login(client, "aaron.auditor")
+
+    response = auditor.get("/")
+
+    assert response.status_code == 200
+    for label in ("Overview", "Apps", "New apps", "Records"):
+        assert f'<span class="nav-label">{label}</span>' in response.text
+    assert "Replacing Power Apps" in response.text
+    assert "+ Add an app" in response.text
+    assert "Delivery log" not in response.text
+    assert "App catalog" not in response.text

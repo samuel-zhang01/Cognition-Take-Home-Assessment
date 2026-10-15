@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block title %}App catalog · Operations Portal{% endblock %}
+{% block title %}Apps and delivery · Operations Portal{% endblock %}
 {% block content %}
 <div class="page-heading">
-  <div><h1>App catalog</h1><p>Four operational apps share authentication, permissions, persistence, and audit history.</p></div>
+  <div><h1>Apps and delivery</h1><p>Three core apps, Access reviews, and the shared foundations they use.</p></div>
 </div>
 <section class="cards">
   {% for app in apps %}
@@ -17,7 +17,7 @@
   </article>
   {% endfor %}
 </section>
-<section class="panel dashboard-section">
+<section id="add" class="panel dashboard-section">
   <h2>How a new app is added</h2>
   <ol class="link-list">
     <li>Add a versioned table and seed records. Set role permissions and audit scope, and add a demo account when the module has its own role.</li>
@@ -47,5 +47,24 @@
 }
 AUDIT_SCOPE["access_reviewer"] = {"access_reviews"}</code></pre>
   <p>Added in round 2 ({{ second_round_minutes }}-minute round, which also delivered import/export, the dashboard and auth hardening). {{ access_build.diff_stat }}</p>
+</section>
+<section id="delivery" class="dashboard-section">
+  <h2>How these apps were built</h2>
+  <section class="kpi-grid">
+    <article class="kpi-card"><div class="kpi-label">Rounds</div><div class="metric-value">{{ summary.rounds }}</div><div class="kpi-sub">accepted work rounds</div></article>
+    <article class="kpi-card"><div class="kpi-label">Total wall-clock</div><div class="metric-value">{{ summary.total_wall_clock_minutes }}</div><div class="kpi-sub">minutes, rounded</div></article>
+    <article class="kpi-card"><div class="kpi-label">Tests passing</div><div class="metric-value">{{ summary.tests_passing }}</div><div class="kpi-sub">latest full suite</div></article>
+  </section>
+  <p class="muted">Rounds were timed from brief to last commit. Commits were batched, so per-commit timing is not meaningful.</p>
+  {% for round in rounds %}
+  <section class="panel delivery-round">
+    <div class="page-heading"><div><h3>{{ round.name }}</h3><p><span class="date-cell">{{ round.start|datetime }}</span> to <span class="date-cell">{{ round.end|datetime }}</span></p></div><strong>{{ round.wall_clock_minutes|round|int }} min wall-clock</strong></div>
+    <p class="muted">Human time: Not measured</p>
+    <div class="table-wrap"><table><thead><tr><th>Commit</th><th>Summary</th><th>Time</th></tr></thead><tbody>
+      {% for commit in round.commits %}<tr><td class="id">{{ commit.hash }}</td><td>{{ commit.summary }}</td><td class="date-cell">{{ commit.time|datetime }}</td></tr>{% endfor %}
+    </tbody></table></div>
+    <h3>Checks</h3><ul class="checks-list">{% for check in round.checks %}<li>{{ check }}</li>{% endfor %}</ul>
+  </section>
+  {% endfor %}
 </section>
 {% endblock %}

@@ -21,7 +21,7 @@ from app.core.auth import (
 from app.core.audit import list_audit
 from app.core.commands import CommandError
 from app.core.db import init_db
-from app.core.registry import MODULES
+from app.core.registry import CORE_MODULES, MODULES, NEW_MODULES
 from app.modules import (
     access_reviews,
     audit_view,
@@ -102,6 +102,8 @@ def create_app(db_path=None):
             "home.html",
             user=user,
             modules=MODULES,
+            core_modules=CORE_MODULES,
+            new_modules=NEW_MODULES,
             metrics=metrics.collect_metrics(conn),
             recent_activity=list_audit(conn, user)[:8],
         )
