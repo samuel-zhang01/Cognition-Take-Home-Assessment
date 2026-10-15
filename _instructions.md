@@ -32,4 +32,4 @@ The goal would be to return this completed within 4 days - please let me know if
 
 
 TODO: 
-do thorough and deep research on the pricing models of a US Base Series C FinDex startup paying $250k a year for Microsoft Power Apps. Use this example as Microsoft Power Apps. Let's just do the worst-case estimation and see how it is. Build upon the pasted text that I gave you, which has already been researched. I want you to spawn out multiple agents, do online research, and make sure all the information is absolutely correct before we build anything 
+do thorough and deep research on the pricing models of a US Base Series C Fintec startup paying $250k a year for Microsoft Power Apps. Use this example as Microsoft Power Apps. Let's just do the worst-case estimation and see how it is. Build upon the pasted text that I gave you, which has already been researched. I want you to spawn out multiple agents, do online research, and make sure all the information is absolutely correct before we build anything 
