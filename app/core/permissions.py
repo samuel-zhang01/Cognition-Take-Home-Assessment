@@ -1,5 +1,6 @@
 ROLE_PERMISSIONS = {
     "reviewer": {
+        "modules.read",
         "counterparty.read",
         "claim.read",
         "flag.read",
@@ -7,6 +8,7 @@ ROLE_PERMISSIONS = {
         "counterparty.review",
     },
     "claims_operator": {
+        "modules.read",
         "counterparty.read",
         "claim.read",
         "flag.read",
@@ -14,6 +16,7 @@ ROLE_PERMISSIONS = {
         "claim.approve",
     },
     "flag_operator": {
+        "modules.read",
         "counterparty.read",
         "claim.read",
         "flag.read",
@@ -21,10 +24,16 @@ ROLE_PERMISSIONS = {
         "flag.change",
     },
     "auditor": {
+        "modules.read",
         "counterparty.read",
         "claim.read",
         "flag.read",
         "audit.read",
+    },
+    "access_reviewer": {
+        "modules.read",
+        "access_reviews.decide",
+        "access_reviews.import",
     },
 }
 
@@ -33,4 +42,5 @@ AUDIT_SCOPE = {
     "claims_operator": {"claims"},
     "flag_operator": {"flags"},
     "auditor": {"counterparties", "claims", "flags"},
+    "access_reviewer": {"access_reviews"},
 }

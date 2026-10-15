@@ -44,4 +44,12 @@ MODULES = (
         "Auditor",
         "Cross-tool audit (shared foundation)",
     ),
+    ModuleSpec(
+        "access_reviews",
+        "Access reviews",
+        "/access-reviews",
+        "Review employee access to business systems for the current quarter.",
+        "Access reviewer",
+        "New: planned tool 4 of 10+",
+    ),
 )

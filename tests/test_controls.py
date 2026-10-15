@@ -275,3 +275,15 @@ def test_claim_counterparty_linkage_and_audit_scope(client):
     scoped = reviewer.get("/api/audit").json()
     assert scoped and all(event["module"] == "counterparties" for event in scoped)
     assert reviewer.get("/api/audit?module=claims").json() == []
+
+
+def test_access_reviews_decision_permissions_and_stale_version(client):
+    nina = login(client, "nina.access")
+    path = "/api/access-reviews/ENT-002/decide"
+    body = {"decision": "certify", "reason": "Access confirmed with manager", "expected_version": 1}
+    assert nina.post(path, json=body).status_code == 200
+    assert nina.get("/api/access-reviews").json()[1]["status"] == "certified"
+    assert nina.post(path, json=body).status_code == 409
+
+    reviewer = login(TestClient(client.app), "rita.reviewer")
+    assert reviewer.post(path, json=body).status_code == 403

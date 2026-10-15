@@ -10,10 +10,11 @@ from app.core.permissions import ROLE_PERMISSIONS
 
 
 DEMO_USERS = (
-    ("rita.reviewer", "Rita Reviewer", "reviewer"),
-    ("colin.claims", "Colin Claims", "claims_operator"),
-    ("fiona.flags", "Fiona Flags", "flag_operator"),
-    ("aaron.auditor", "Aaron Auditor", "auditor"),
+    ("rita.reviewer", "Rita Patel", "reviewer"),
+    ("colin.claims", "Colin Murray", "claims_operator"),
+    ("fiona.flags", "Fiona Grant", "flag_operator"),
+    ("aaron.auditor", "Aaron Lee", "auditor"),
+    ("nina.access", "Nina Okafor", "access_reviewer"),
 )
 COOKIE_NAME = "portal_session"
 

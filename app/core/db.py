@@ -56,6 +56,19 @@ CREATE TABLE IF NOT EXISTS flags (
     version INTEGER NOT NULL DEFAULT 1,
     updated_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS entitlements (
+    id TEXT PRIMARY KEY,
+    employee TEXT NOT NULL,
+    team TEXT NOT NULL,
+    system TEXT NOT NULL,
+    access_level TEXT NOT NULL,
+    last_used_at TEXT NOT NULL,
+    quarter TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('pending', 'certified', 'revoked')),
+    decided_at TEXT,
+    version INTEGER NOT NULL DEFAULT 1,
+    updated_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS audit_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     at TEXT NOT NULL,

@@ -16,7 +16,7 @@ from app.core.auth import (
 from app.core.commands import CommandError
 from app.core.db import init_db
 from app.core.registry import MODULES
-from app.modules import audit_view, claims, counterparties, flags
+from app.modules import access_reviews, audit_view, claims, counterparties, flags
 from app.modules.common import render
 from app.seed import seed_if_empty
 
@@ -39,6 +39,7 @@ def create_app(db_path=None):
     application.include_router(claims.router)
     application.include_router(flags.router)
     application.include_router(audit_view.router)
+    application.include_router(access_reviews.router)
 
     @application.exception_handler(CommandError)
     async def command_error_handler(request, exc):

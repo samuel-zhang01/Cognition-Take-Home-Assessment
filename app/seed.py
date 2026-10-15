@@ -76,6 +76,7 @@ def seed_if_empty(db_path):
                    VALUES (?, ?, ?, 1, ?)""",
                 [(*item, now) for item in flags],
             )
+            seed_entitlements(conn, now)
         return True
     finally:
         conn.close()
@@ -92,10 +93,55 @@ def reset_db(db_path):
             conn.execute("DELETE FROM claims")
             conn.execute("DELETE FROM counterparties")
             conn.execute("DELETE FROM flags")
+            conn.execute("DELETE FROM entitlements")
             conn.execute("DELETE FROM users")
         return seed_if_empty(db_path)
     finally:
         conn.close()
+
+
+def seed_entitlements(conn, now=None):
+    now = now or utc_now()
+    entitlements = [
+        ("ENT-001", "Maya Chen", "Finance", "Stripe Dashboard", "Refunds analyst", "2026-10-12T09:30:00+00:00", "certified", 4),
+        ("ENT-002", "Oliver James", "Data", "Snowflake", "Analyst", "2026-10-14T15:10:00+00:00", "pending", None),
+        ("ENT-003", "Priya Shah", "Platform", "AWS production console", "Read-only", "2026-10-15T08:40:00+00:00", "pending", None),
+        ("ENT-004", "Daniel Foster", "Support", "Zendesk", "Team lead", "2026-10-11T11:25:00+00:00", "certified", 9),
+        ("ENT-005", "Sofia Alvarez", "Engineering", "GitHub org admin", "Organization admin", "2026-10-13T17:05:00+00:00", "pending", None),
+        ("ENT-006", "Ethan Brooks", "Security", "AWS production console", "Security auditor", "2026-10-15T06:55:00+00:00", "certified", 12),
+        ("ENT-007", "Amara Okafor", "Finance", "Stripe Dashboard", "Finance operator", "2026-10-10T13:15:00+00:00", "pending", None),
+        ("ENT-008", "Lucas Meyer", "Data", "Snowflake", "Data engineer", "2026-10-09T10:20:00+00:00", "revoked", 15),
+        ("ENT-009", "Grace Liu", "Support", "Zendesk", "Support agent", "2026-10-14T12:45:00+00:00", "certified", 20),
+        ("ENT-010", "Noah Williams", "Platform", "AWS production console", "Deploy operator", "2026-10-08T18:10:00+00:00", "pending", None),
+        ("ENT-011", "Isabella Rossi", "Engineering", "GitHub org admin", "Repository maintainer", "2026-10-12T14:20:00+00:00", "certified", 24),
+        ("ENT-012", "Ava Thompson", "Finance", "NetSuite", "Accounts payable", "2026-10-07T16:35:00+00:00", "pending", None),
+        ("ENT-013", "Leo Martin", "Data", "Snowflake", "Read-only analyst", "2026-10-06T09:05:00+00:00", "revoked", 28),
+        ("ENT-014", "Zara Ahmed", "Security", "Okta Admin", "Helpdesk administrator", "2026-10-13T07:50:00+00:00", "pending", None),
+        ("ENT-015", "Theo Wilson", "Support", "Zendesk", "Support manager", "2026-10-15T10:00:00+00:00", "certified", 30),
+    ]
+    from datetime import datetime, timedelta, timezone
+
+    base = datetime.now(timezone.utc)
+    for row in entitlements:
+        entitlement_id, employee, team, system, access_level, last_used, status, offset = row
+        decided_at = (base - timedelta(days=offset)).isoformat() if offset else None
+        conn.execute(
+            """INSERT INTO entitlements
+               (id, employee, team, system, access_level, last_used_at, quarter,
+                status, decided_at, version, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, '2026-Q4', ?, ?, 1, ?)""",
+            (
+                entitlement_id,
+                employee,
+                team,
+                system,
+                access_level,
+                last_used,
+                status,
+                decided_at,
+                decided_at or last_used or now,
+            ),
+        )
 
 
 def main():

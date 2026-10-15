@@ -70,6 +70,8 @@ tests/test_controls.py  behaviour checks below
 5. Add templates using `base.html`, `command-form` forms (handled by `app.js`) and `audit_rows.html`.
 6. Add tests to `tests/test_controls.py` for: happy path + audit row, denied role, missing reason, stale version.
 
+For a module-specific role, add the role to `ROLE_PERMISSIONS` and `AUDIT_SCOPE`, and add its demo account to `DEMO_USERS` in `app/core/auth.py`. Seed the account and module records through the shared seed function.
+
 In practice an engineer gives Devin a prompt such as *"Add a vendor-contract module following the add-a-module steps in the README; owner role vendor_manager; one action: mark contract renewed with a reason"*, then reviews the PR.
 
 ### Non-engineer change request path (illustrative)
