@@ -1,3 +1,4 @@
+import re
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
@@ -168,27 +169,159 @@ def _table_columns(conn, table):
     return {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
 
 
-def _migrate_schema(conn):
-    for table, additions in MISSING_COLUMNS.items():
-        columns = _table_columns(conn, table)
-        for name, definition in additions.items():
-            if name not in columns:
-                conn.execute(
-                    f"ALTER TABLE {table} ADD COLUMN {name} {definition}"
-                )
+def _quote_identifier(name):
+    return '"' + name.replace('"', '""') + '"'
 
-    counterparty_columns = _table_columns(conn, "counterparties")
-    if "market" in counterparty_columns:
-        conn.execute(
-            """UPDATE counterparties
-               SET country = CASE UPPER(market)
-                   WHEN 'UK' THEN 'United Kingdom'
-                   WHEN 'US' THEN 'United States'
-                   WHEN 'EU' THEN 'Unknown'
-                   ELSE COALESCE(NULLIF(market, ''), 'Unknown')
-               END
-               WHERE country = 'Unknown'"""
+
+def _table_ddl(table, name):
+    match = re.search(
+        rf"CREATE TABLE IF NOT EXISTS {re.escape(table)} \((.*?)\);",
+        SCHEMA,
+        re.DOTALL,
+    )
+    if match is None:
+        raise RuntimeError(f"No current schema definition for table {table!r}.")
+    return f"CREATE TABLE {_quote_identifier(name)} ({match.group(1)});"
+
+
+def _table_info(conn, table):
+    quoted_table = _quote_identifier(table)
+    return {
+        row["name"]: row
+        for row in conn.execute(f"PRAGMA table_info({quoted_table})")
+    }
+
+
+def _expected_table_info(conn, table):
+    probe = f"__schema_probe_{table}"
+    conn.execute(_table_ddl(table, probe))
+    try:
+        return _table_info(conn, probe)
+    finally:
+        conn.execute(f"DROP TABLE {_quote_identifier(probe)}")
+
+
+def _table_needs_rebuild(existing, expected):
+    if set(existing) != set(expected):
+        return True
+    return any(
+        bool(existing[name]["notnull"]) != bool(expected[name]["notnull"])
+        for name in expected
+    )
+
+
+def _missing_column_expression(table, name, info):
+    definition = MISSING_COLUMNS.get(table, {}).get(name)
+    if definition:
+        match = re.search(r"\bDEFAULT\s+(.+)$", definition, re.IGNORECASE)
+        if match:
+            return match.group(1)
+
+    if info["dflt_value"] is not None:
+        return str(info["dflt_value"])
+    if not info["notnull"] or (
+        info["pk"] and str(info["type"]).upper() == "INTEGER"
+    ):
+        return "NULL"
+    raise RuntimeError(
+        f"Cannot migrate {table!r}: missing required column {name!r} "
+        "has no migration default. Back up the database; to start fresh, "
+        "delete data/portal.db and reseed."
+    )
+
+
+def _column_expression(table, name, existing, expected):
+    if (
+        table == "counterparties"
+        and name == "country"
+        and "market" in existing
+    ):
+        market = f'old.{_quote_identifier("market")}'
+        mapped_market = (
+            f"CASE UPPER({market}) "
+            "WHEN 'UK' THEN 'United Kingdom' "
+            "WHEN 'US' THEN 'United States' "
+            "WHEN 'EU' THEN 'Unknown' "
+            f"ELSE COALESCE(NULLIF({market}, ''), 'Unknown') END"
         )
+        if name in existing:
+            country = f'old.{_quote_identifier(name)}'
+            return (
+                f"CASE WHEN {country} IS NULL OR {country} IN ('', 'Unknown') "
+                f"THEN {mapped_market} ELSE {country} END"
+            )
+        return mapped_market
+
+    if (
+        table == "audit_events"
+        and name == "actor_username"
+        and name not in existing
+        and "actor_user_id" in existing
+    ):
+        actor_id = f'old.{_quote_identifier("actor_user_id")}'
+        return (
+            "COALESCE((SELECT username FROM users "
+            f"WHERE id = {actor_id}), 'unknown')"
+        )
+
+    if name in existing:
+        return f"old.{_quote_identifier(name)}"
+    return _missing_column_expression(table, name, expected[name])
+
+
+def _rebuild_table(conn, table, existing, expected):
+    new_table = f"{table}__new"
+    if conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+        (new_table,),
+    ).fetchone():
+        raise RuntimeError(
+            f"Cannot migrate table {table!r}: temporary table {new_table!r} "
+            "already exists. Back up the database; to start fresh, "
+            "delete data/portal.db and reseed."
+        )
+    conn.execute(_table_ddl(table, new_table))
+    target_columns = list(expected)
+    expressions = [
+        _column_expression(table, name, existing, expected)
+        for name in target_columns
+    ]
+    quoted_columns = ", ".join(_quote_identifier(name) for name in target_columns)
+    selected_columns = ", ".join(expressions)
+    conn.execute(
+        f"INSERT INTO {_quote_identifier(new_table)} ({quoted_columns}) "
+        f"SELECT {selected_columns} FROM {_quote_identifier(table)} AS old"
+    )
+    conn.execute(f"DROP TABLE {_quote_identifier(table)}")
+    conn.execute(
+        f"ALTER TABLE {_quote_identifier(new_table)} "
+        f"RENAME TO {_quote_identifier(table)}"
+    )
+
+
+def _migrate_schema(conn):
+    for table in REQUIRED_COLUMNS:
+        existing = _table_info(conn, table)
+        expected = _expected_table_info(conn, table)
+        if _table_needs_rebuild(existing, expected):
+            _rebuild_table(conn, table, existing, expected)
+
+    for statement in re.findall(
+        r"CREATE INDEX IF NOT EXISTS\s+.*?;", SCHEMA, re.DOTALL
+    ):
+        conn.execute(statement)
+
+    violations = conn.execute("PRAGMA foreign_key_check").fetchall()
+    if violations:
+        details = ", ".join(
+            f"{row['table']} row {row['rowid']} references {row['parent']}"
+            for row in violations
+        )
+        raise RuntimeError(
+            f"Database migration found foreign-key violations: {details}. "
+            "Back up the database; to start fresh, delete data/portal.db and reseed."
+        )
+
     conn.execute(
         """UPDATE counterparties SET submitted_at = updated_at
            WHERE submitted_at = ''"""
@@ -234,8 +367,12 @@ def init_db(db_path):
     try:
         with connect(db_path) as conn:
             conn.executescript(SCHEMA)
-            with transaction(conn):
-                _migrate_schema(conn)
+            conn.execute("PRAGMA foreign_keys = OFF")
+            try:
+                with transaction(conn):
+                    _migrate_schema(conn)
+            finally:
+                conn.execute("PRAGMA foreign_keys = ON")
     except sqlite3.Error as exc:
         raise RuntimeError(
             "The existing portal database could not be migrated in place. "

@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from app.core.auth import hash_password
 from app.core.db import init_db
 from app.main import create_app
+from app.seed import reset_db
 
 
 def create_legacy_database(db_path):
@@ -69,7 +70,7 @@ def create_legacy_database(db_path):
             CREATE TABLE audit_events (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 at TEXT NOT NULL,
-                actor_username TEXT NOT NULL,
+                actor_user_id INTEGER NOT NULL REFERENCES users(id),
                 actor_role TEXT NOT NULL,
                 module TEXT NOT NULL,
                 resource_type TEXT NOT NULL,
@@ -106,6 +107,23 @@ def create_legacy_database(db_path):
             ),
         )
         conn.execute(
+            """INSERT INTO counterparty_evidence
+               (id, counterparty_id, evidence_type, source, source_type,
+                rated_entity_or_market, value, as_of, provenance)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                "EV-LEGACY",
+                "CP-LEGACY",
+                "financial_strength_opinion",
+                "Kestrel Ratings",
+                "credit_rating",
+                "Legacy Mutual",
+                "A-, stable outlook",
+                "2025-10-20",
+                "Legacy evidence record",
+            ),
+        )
+        conn.execute(
             """INSERT INTO claims
                (id, counterparty_id, claimant_ref, description, amount_minor,
                 currency, status, version, updated_at)
@@ -127,14 +145,17 @@ def create_legacy_database(db_path):
                VALUES (?, ?, ?, ?, ?)""",
             ("sandbox.old_flag", "Legacy flag", 1, 1, updated_at),
         )
+        actor_user_id = conn.execute(
+            "SELECT id FROM users WHERE username='rita.reviewer'"
+        ).fetchone()[0]
         conn.execute(
             """INSERT INTO audit_events
-               (at, actor_username, actor_role, module, resource_type, resource_id,
+               (at, actor_user_id, actor_role, module, resource_type, resource_id,
                 action, reason, before_json, after_json, resource_version)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 updated_at,
-                "rita.reviewer",
+                actor_user_id,
                 "reviewer",
                 "counterparties",
                 "counterparty",
@@ -154,6 +175,7 @@ def create_legacy_database(db_path):
 def test_startup_migrates_legacy_schema_and_preserves_data(tmp_path):
     db_path = tmp_path / "legacy-portal.db"
     create_legacy_database(db_path)
+    assert init_db(db_path) is None
 
     application = create_app(db_path=db_path)
     with TestClient(application) as client:
@@ -168,6 +190,29 @@ def test_startup_migrates_legacy_schema_and_preserves_data(tmp_path):
         assert login.status_code == 303
         assert client.get("/api/metrics").status_code == 200
         assert client.get("/counterparties/CP-LEGACY").status_code == 200
+        imported = client.post(
+            "/api/import/counterparties",
+            files={
+                "file": (
+                    "legacy-import.csv",
+                    (
+                        "id,name,kind,country,registration_number,risk_tier,"
+                        "assigned_reviewer,submitted_at\n"
+                        "CP-IMPORTED,Imported Mutual,insurer,United Kingdom,"
+                        "UK-REG-900,low,rita.reviewer,2026-10-15\n"
+                    ),
+                    "text/csv",
+                )
+            },
+            data={"reason": "Legacy migration regression", "dry_run": "false"},
+        )
+        assert imported.status_code == 200
+        assert imported.json() == {
+            "rows": 1,
+            "valid": 1,
+            "errors": [],
+            "committed": True,
+        }
 
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
@@ -190,6 +235,12 @@ def test_startup_migrates_legacy_schema_and_preserves_data(tmp_path):
         assert claim["submitted_at"] == claim["updated_at"]
         assert claim["decided_at"] == claim["updated_at"]
 
+        evidence = conn.execute(
+            "SELECT * FROM counterparty_evidence WHERE id='EV-LEGACY'"
+        ).fetchone()
+        assert evidence["source"] == "Kestrel Ratings"
+        assert evidence["value"] == "A-, stable outlook"
+
         flag = conn.execute(
             "SELECT * FROM flags WHERE key='sandbox.old_flag'"
         ).fetchone()
@@ -198,6 +249,37 @@ def test_startup_migrates_legacy_schema_and_preserves_data(tmp_path):
         assert conn.execute(
             "SELECT details FROM audit_events WHERE resource_id='CP-LEGACY'"
         ).fetchone()["details"] is None
+        audit = conn.execute(
+            """SELECT actor_username, reason FROM audit_events
+               WHERE resource_id='CP-LEGACY'"""
+        ).fetchone()
+        assert audit["actor_username"] == "rita.reviewer"
+        assert audit["reason"] == "Legacy audit record"
+
+        imported_counterparty = conn.execute(
+            "SELECT id FROM counterparties WHERE id='CP-IMPORTED'"
+        ).fetchone()
+        assert imported_counterparty["id"] == "CP-IMPORTED"
+
+        columns = {
+            table: {
+                row["name"]
+                for row in conn.execute(f"PRAGMA table_info({table})")
+            }
+            for table in (
+                "counterparties",
+                "counterparty_evidence",
+                "audit_events",
+            )
+        }
+        assert "market" not in columns["counterparties"]
+        assert not {
+            "source_type",
+            "rated_entity_or_market",
+            "provenance",
+        } & columns["counterparty_evidence"]
+        assert "actor_user_id" not in columns["audit_events"]
+
         tables = {
             row["name"]
             for row in conn.execute(
@@ -206,7 +288,17 @@ def test_startup_migrates_legacy_schema_and_preserves_data(tmp_path):
         }
         assert {"entitlements", "control_events"} <= tables
         assert conn.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 1
-        assert conn.execute("SELECT COUNT(*) FROM audit_events").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM audit_events").fetchone()[0] == 2
+        assert conn.execute("PRAGMA foreign_key_check").fetchall() == []
+    finally:
+        conn.close()
+
+    assert reset_db(db_path) is True
+    conn = sqlite3.connect(db_path)
+    try:
+        assert conn.execute("SELECT COUNT(*) FROM counterparties").fetchone()[0] == 12
+        assert conn.execute("SELECT COUNT(*) FROM counterparty_evidence").fetchone()[0] == 24
+        assert conn.execute("SELECT COUNT(*) FROM claims").fetchone()[0] == 25
     finally:
         conn.close()
 
