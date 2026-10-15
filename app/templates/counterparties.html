@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Insurance counterparties{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">Proxy for KYC review queue</p><h1>Insurance counterparties</h1></div></div>
+<p class="notice">Synthetic fixture evidence only. Rating opinions and observed payout history are separate evidence types; there is no combined score.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>Counterparty</th><th>Type</th><th>Market</th><th>Status</th><th>Linked claims</th></tr></thead>
+  <tbody>{% for item in counterparties %}
+  <tr><td><a href="/counterparties/{{ item.id }}">{{ item.name }}</a><small class="sub">{{ item.id }}</small></td><td>{{ item.kind|replace("_", " ") }}</td><td>{{ item.market }}</td><td><span class="status {{ item.status }}">{{ item.status|replace("_", " ") }}</span></td><td>{{ item.linked_claims }}</td></tr>
+  {% endfor %}</tbody>
+</table></div>
+{% endblock %}

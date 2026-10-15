@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Feature flags{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">Proxy for feature-flag admin</p><h1>Feature flags</h1></div></div>
+<p class="notice">Demo-only flag values. Every change requires a reason and is written to the shared audit log.</p>
+<div class="flag-list">{% for flag in flags %}
+  <article class="panel flag-row">
+    <div><h2><code>{{ flag.key }}</code></h2><p>{{ flag.description }}</p><span class="status">{{ "Enabled" if flag.enabled else "Disabled" }}</span></div>
+    {% if "flag.change" in permissions %}
+    <form class="command-form compact-form" data-endpoint="/api/flags/{{ flag.key }}/change">
+      <input type="hidden" name="expected_version" value="{{ flag.version }}">
+      <label>Reason<textarea name="reason" minlength="3" maxlength="500" required></textarea></label>
+      <button type="submit">Turn {{ "off" if flag.enabled else "on" }}</button><p class="form-message" aria-live="polite"></p>
+      <input type="hidden" name="enabled" value="{{ 'false' if flag.enabled else 'true' }}">
+    </form>
+    {% endif %}
+  </article>
+{% endfor %}</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ counterparty.name }}{% endblock %}
+{% block content %}
+<p class="eyebrow"><a href="/counterparties">← Insurance counterparties</a></p>
+<div class="page-heading"><div><h1>{{ counterparty.name }}</h1><p>{{ counterparty.id }} · {{ counterparty.kind|replace("_", " ") }} · {{ counterparty.market }}</p></div><span class="status {{ counterparty.status }}">{{ counterparty.status|replace("_", " ") }}</span></div>
+<div class="detail-grid">
+  {% for evidence_type, title in [("financial_strength_opinion", "Financial-strength opinions"), ("observed_payout_history", "Observed payout history")] %}
+  <section class="panel">
+    <h2>{{ title }}</h2>
+    {% for evidence in counterparty.evidence if evidence.evidence_type == evidence_type %}
+    <div class="evidence">
+      <strong>{{ evidence.value }}</strong>
+      <p>{{ evidence.source }} · {{ evidence.source_type|replace("_", " ") }}</p>
+      <small>{{ evidence.rated_entity_or_market }} · as of {{ evidence.as_of }}</small>
+      <p class="muted">{{ evidence.provenance }}</p>
+    </div>
+    {% endfor %}
+  </section>
+  {% endfor %}
+</div>
+{% if "counterparty.review" in permissions and counterparty.status == "pending_review" %}
+<section class="panel action-panel">
+  <h2>Review this counterparty</h2>
+  <form class="command-form" data-endpoint="/api/counterparties/{{ counterparty.id }}/review">
+    <input type="hidden" name="expected_version" value="{{ counterparty.version }}">
+    <label>Decision<select name="decision"><option value="approve">Approve</option><option value="reject">Reject</option></select></label>
+    <label>Reason<textarea name="reason" minlength="3" maxlength="500" required></textarea></label>
+    <button type="submit">Save review</button><p class="form-message" aria-live="polite"></p>
+  </form>
+</section>
+{% endif %}
+<section class="panel">
+  <h2>Linked claims</h2>
+  {% if counterparty.claims %}
+  <ul class="link-list">{% for claim in counterparty.claims %}<li><a href="/claims/{{ claim.id }}">{{ claim.id }} — {{ claim.description }}</a> <span class="status">{{ claim.status|replace("_", " ") }}</span></li>{% endfor %}</ul>
+  {% else %}<p>No linked claims.</p>{% endif %}
+</section>
+<section class="panel"><h2>Audit history</h2>{% include "audit_rows.html" %}</section>
+{% endblock %}

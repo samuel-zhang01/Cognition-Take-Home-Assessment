@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Shared audit{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">Shared audit · role scoped</p><h1>Audit history</h1></div></div>
+<form class="filters" method="get" action="/audit">
+  <label>Module<select name="module"><option value="">All in my scope</option>{% for key in ["counterparties", "claims", "flags"] %}<option value="{{ key }}" {% if selected_module == key %}selected{% endif %}>{{ key }}</option>{% endfor %}</select></label>
+  <label>Resource ID<input name="resource_id" value="{{ resource_id }}"></label><button type="submit">Filter</button>
+</form>
+{% set audit = events %}{% include "audit_rows.html" %}
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Claims{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">Proxy for refunds dashboard</p><h1>Claims</h1></div></div>
+<p class="notice"><strong>Simulated approval — no money moves; not settlement.</strong> Counterparty status is shown as context only and does not determine claim approval.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>Claim</th><th>Counterparty</th><th>Amount</th><th>Status</th><th>Counterparty context</th></tr></thead>
+  <tbody>{% for claim in claims %}
+  <tr><td><a href="/claims/{{ claim.id }}">{{ claim.id }}</a><small class="sub">{{ claim.claimant_ref }}</small></td><td><a href="/counterparties/{{ claim.counterparty_id }}">{{ claim.counterparty_name }}</a></td><td>{{ claim.currency }} {{ "%.2f"|format(claim.amount_minor / 100) }}</td><td><span class="status {{ claim.status }}">{{ claim.status|replace("_", " ") }}</span></td><td>{{ claim.counterparty_status|replace("_", " ") }}</td></tr>
+  {% endfor %}</tbody>
+</table></div>
+{% endblock %}
