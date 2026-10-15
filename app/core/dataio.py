@@ -4,6 +4,9 @@ from decimal import Decimal, InvalidOperation
 from typing import Callable, Literal
 
 
+SQLITE_MAX_INTEGER = 2**63 - 1
+
+
 @dataclass(frozen=True)
 class Column:
     name: str
@@ -176,6 +179,10 @@ def parse_value(column, value):
             raise ValueError("Enter a valid amount.") from exc
         if not number.is_finite() or number < 0:
             raise ValueError("Enter a non-negative amount.")
+        if number.as_tuple().exponent < -2:
+            raise ValueError("Enter an amount with no more than 2 decimal places.")
+        if number * 100 > SQLITE_MAX_INTEGER:
+            raise ValueError("The amount exceeds the supported range.")
         return number
     if column.kind == "date":
         from datetime import date
@@ -196,6 +203,16 @@ def validate_rows(conn, spec, reader):
     errors = []
     seen = set()
     fieldnames = reader.fieldnames or []
+    known_columns = {column.name for column in spec.columns}
+    for fieldname in fieldnames:
+        if fieldname not in known_columns:
+            errors.append(
+                {
+                    "row": 1,
+                    "column": fieldname or "header",
+                    "message": "Unknown column.",
+                }
+            )
     for column in spec.columns:
         if column.required and column.name not in fieldnames:
             errors.append(
@@ -203,6 +220,14 @@ def validate_rows(conn, spec, reader):
             )
     for row_number, raw in enumerate(reader, start=2):
         parsed = {}
+        if None in raw:
+            errors.append(
+                {
+                    "row": row_number,
+                    "column": "row",
+                    "message": "The row has more fields than the header.",
+                }
+            )
         for column in spec.columns:
             try:
                 parsed[column.name] = parse_value(column, raw.get(column.name))

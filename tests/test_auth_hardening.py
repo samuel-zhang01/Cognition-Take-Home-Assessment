@@ -1,12 +1,14 @@
 import os
 import sqlite3
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
 import pytest
 from fastapi.testclient import TestClient
 
-from app.core.auth import COOKIE_NAME, clear_login_failures
+from app.core.auth import COOKIE_NAME, clear_login_failures, verify_password
 from app.core.db import init_db
 from app.main import create_app
 from app.seed import seed_if_empty
@@ -118,6 +120,45 @@ def test_successful_login_clears_throttle_key(tmp_path):
             data={"username": "colin.claims", "password": password},
             follow_redirects=False,
         ).status_code == 429
+
+
+def test_concurrent_successful_logins_are_serialized_per_key(tmp_path, monkeypatch):
+    application = create_app(db_path=tmp_path / "concurrent-logins.db")
+    password = os.environ.get("DEMO_PASSWORD", "demo")
+    verification_started = threading.Event()
+    allow_verification = threading.Event()
+
+    def delayed_verify(*args, **kwargs):
+        verification_started.set()
+        if not allow_verification.wait(5):
+            raise AssertionError("password verification was not released")
+        return verify_password(*args, **kwargs)
+
+    monkeypatch.setattr("app.main.verify_password", delayed_verify)
+
+    def post_login():
+        with TestClient(application) as client:
+            return client.post(
+                "/login",
+                data={"username": "rita.reviewer", "password": password},
+                follow_redirects=False,
+            )
+
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        futures = [pool.submit(post_login) for _ in range(6)]
+        try:
+            assert verification_started.wait(5)
+            deadline = time.monotonic() + 2
+            while time.monotonic() < deadline and not any(
+                future.done() for future in futures
+            ):
+                time.sleep(0.01)
+            assert not any(future.done() for future in futures)
+        finally:
+            allow_verification.set()
+        responses = [future.result(timeout=10) for future in futures]
+
+    assert all(response.status_code == 303 for response in responses)
 
 
 def test_cookie_secure_defaults_to_request_scheme_and_honors_override(tmp_path, monkeypatch):

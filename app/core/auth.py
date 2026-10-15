@@ -5,6 +5,7 @@ import os
 import threading
 import time
 from collections import deque
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends, HTTPException, Request
@@ -28,6 +29,8 @@ LOGIN_ATTEMPT_LIMIT = 5
 LOGIN_WINDOW_SECONDS = 15 * 60
 _login_failures = {}
 _login_failures_lock = threading.Lock()
+_login_attempt_locks = {}
+_login_attempt_locks_guard = threading.Lock()
 
 
 def utc_now():
@@ -79,6 +82,25 @@ def find_session_user(conn, token):
 
 def _login_key(username, client_ip):
     return username.lower(), client_ip
+
+
+@contextmanager
+def login_attempt_lock(username, client_ip):
+    key = _login_key(username, client_ip)
+    with _login_attempt_locks_guard:
+        state = _login_attempt_locks.get(key)
+        if state is None:
+            state = {"lock": threading.Lock(), "users": 0}
+            _login_attempt_locks[key] = state
+        state["users"] += 1
+    try:
+        with state["lock"]:
+            yield
+    finally:
+        with _login_attempt_locks_guard:
+            state["users"] -= 1
+            if state["users"] == 0:
+                _login_attempt_locks.pop(key, None)
 
 
 def _prune_login_failures(now):

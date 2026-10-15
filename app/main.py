@@ -14,6 +14,7 @@ from app.core.auth import (
     find_session_user,
     get_connection,
     login_attempt_allowed,
+    login_attempt_lock,
     public_identity,
     verify_password,
 )
@@ -117,22 +118,23 @@ def create_app(db_path=None):
         conn=Depends(get_connection),
     ):
         client_ip = request.client.host if request.client else ""
-        if not login_attempt_allowed(username, client_ip):
-            return login_response(
-                request,
-                error="Too many sign-in attempts. Try again in 15 minutes.",
-                status_code=429,
-            )
-        row = conn.execute(
-            """SELECT id, username, display_name, role, password_salt, password_hash
-               FROM users WHERE username = ?""",
-            (username,),
-        ).fetchone()
-        if row is None or not verify_password(
-            password, row["password_salt"], row["password_hash"]
-        ):
-            return login_response(request, error="Invalid username or password")
-        clear_login_failures(username, client_ip)
+        with login_attempt_lock(username, client_ip):
+            if not login_attempt_allowed(username, client_ip):
+                return login_response(
+                    request,
+                    error="Too many sign-in attempts. Try again in 15 minutes.",
+                    status_code=429,
+                )
+            row = conn.execute(
+                """SELECT id, username, display_name, role, password_salt, password_hash
+                   FROM users WHERE username = ?""",
+                (username,),
+            ).fetchone()
+            if row is None or not verify_password(
+                password, row["password_salt"], row["password_hash"]
+            ):
+                return login_response(request, error="Invalid username or password")
+            clear_login_failures(username, client_ip)
         import secrets
 
         from app.core.auth import utc_now
