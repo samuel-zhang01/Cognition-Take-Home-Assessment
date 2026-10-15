@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.core.registry import MODULES
+from app.modules.metrics import collect_metrics
 from app.core.auth import get_connection
 from app.modules.common import page_user, render
 
@@ -57,18 +58,8 @@ def business_case(request: Request, conn=Depends(get_connection)):
 
 
 @router.get("/delivery", response_class=HTMLResponse)
-def delivery_page(request: Request, conn=Depends(get_connection)):
-    user = page_user(request, conn)
-    if user is None:
-        return RedirectResponse("/login", status_code=303)
-    log = load_delivery_log()
-    return render(
-        request,
-        "delivery.html",
-        user=user,
-        rounds=log.get("rounds", []),
-        summary=_delivery_summary(log),
-    )
+def delivery_page():
+    return RedirectResponse("/apps#delivery", status_code=307)
 
 
 @router.get("/apps", response_class=HTMLResponse)
@@ -98,4 +89,19 @@ def apps_page(request: Request, conn=Depends(get_connection)):
         access_build=access_build,
         first_round_minutes=first_round_minutes,
         second_round_minutes=second_round_minutes,
+        rounds=rounds,
+        summary=_delivery_summary(log),
+    )
+
+
+@router.get("/security", response_class=HTMLResponse)
+def security_page(request: Request, conn=Depends(get_connection)):
+    user = page_user(request, conn)
+    if user is None:
+        return RedirectResponse("/login", status_code=303)
+    return render(
+        request,
+        "security.html",
+        user=user,
+        metrics=collect_metrics(conn),
     )

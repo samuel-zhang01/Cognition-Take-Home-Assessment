@@ -69,6 +69,7 @@ code, .mono, .id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; 
   letter-spacing: .08em;
   text-transform: uppercase;
 }
+.nav-subtitle { padding: 0 10px 4px; color: #64748b; font-size: 10px; }
 .nav-link {
   display: block;
   padding: 7px 10px;
@@ -76,6 +77,7 @@ code, .mono, .id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; 
   color: #cbd5e1;
   font-size: 13px;
 }
+.nav-link.muted-nav { color: #94a3b8; font-size: 12px; }
 .nav-link:hover { background: #172338; color: #fff; text-decoration: none; }
 .nav-link.active { background: #1e293b; color: #fff; font-weight: 600; }
 .user-block {
@@ -148,6 +150,8 @@ p { margin: 8px 0 14px; }
 .kpi-sub { color: var(--muted); font-size: 12px; }
 .dashboard-section { margin-top: 24px; }
 .dashboard-apps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.dashboard-apps.core-apps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.dashboard-apps.new-apps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .dashboard-app { padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
 .dashboard-app-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
 .dashboard-app-head h2 { margin: 0; }
@@ -156,6 +160,10 @@ p { margin: 8px 0 14px; }
 .dashboard-app .metric-value { font-size: 21px; }
 .dashboard-app .kpi-label { font-size: 9px; letter-spacing: .03em; }
 .dashboard-app .kpi-sub { font-size: 10px; }
+.replaces-label { margin: 4px 0 10px; color: var(--muted); font-size: 11px; }
+.dashboard-add-app { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
+.dashboard-add-app p { color: var(--muted); }
+.dashboard-add-app .button { margin-top: 4px; }
 .currency-values { display: flex; flex-wrap: wrap; gap: 8px; margin: 5px 0 0; }
 .currency-value { padding: 4px 8px; border-radius: 5px; background: #f9fafb; font-variant-numeric: tabular-nums; }
 .open-value { margin-top: 8px; }
@@ -247,6 +255,8 @@ button:hover, .button:hover { background: #1d4ed8; text-decoration: none; }
 .code-block { overflow-x: auto; padding: 12px; border-radius: 7px; color: #e5e7eb; background: #111827; font-size: 12px; }
 .lens-table td:first-child { min-width: 170px; font-weight: 600; }
 .lens-table td:nth-child(2) { min-width: 135px; }
+.security-table td:first-child { min-width: 160px; font-weight: 600; }
+.security-counts { grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); }
 .calculator-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .preset-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
 .preset-row button { border-color: #d1d5db; color: #374151; background: #fff; }
@@ -281,6 +291,8 @@ button:hover, .button:hover { background: #1d4ed8; text-decoration: none; }
 
 @media (max-width: 900px) {
   .dashboard-apps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-apps.core-apps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-apps.new-apps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .detail-grid { grid-template-columns: 1fr; }
   .calculator-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -293,6 +305,7 @@ button:hover, .button:hover { background: #1d4ed8; text-decoration: none; }
   .user-block { margin-top: 14px; }
   .content-shell { margin-left: 0; }
   .dashboard-apps { grid-template-columns: 1fr; }
+  .dashboard-apps.core-apps, .dashboard-apps.new-apps { grid-template-columns: 1fr; }
   .content { padding: 20px 14px 36px; }
   .page-heading { align-items: flex-start; flex-direction: column; }
   .page-actions { width: 100%; }

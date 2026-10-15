@@ -15,8 +15,9 @@
         {% for group, items in nav_groups %}
         <section class="nav-group">
           <span class="nav-label">{{ group }}</span>
+          {% if group == "Apps" %}<span class="nav-subtitle">Replacing Power Apps</span>{% endif %}
           {% for item in items %}
-          <a class="nav-link {% if request.url.path == item.path or (item.path != '/' and request.url.path.startswith(item.path + '/')) %}active{% endif %}" href="{{ item.path }}">{{ item.title }}</a>
+          <a class="nav-link {% if item.key == 'add-app' %}muted-nav{% endif %} {% if item.key != 'add-app' and (request.url.path == item.path or (item.path != '/' and request.url.path.startswith(item.path + '/'))) %}active{% endif %}" href="{{ item.path }}">{{ item.title }}</a>
           {% endfor %}
         </section>
         {% endfor %}

@@ -4,40 +4,54 @@
 <div class="page-heading">
   <div><h1>Dashboard</h1><p>Operational status across the shared tools.</p></div>
 </div>
-<section class="dashboard-apps">
-  <article class="dashboard-app">
-    <div class="dashboard-app-head"><h2><a href="/counterparties">Counterparty reviews</a></h2><span class="sub">KYC queue</span></div>
-    <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">Pending</div><div class="metric-value">{{ metrics.kyc.pending }}</div><div class="kpi-sub">oldest {{ metrics.kyc.oldest_pending_days }} days</div></div>
-      <div class="kpi-card"><div class="kpi-label">Decided</div><div class="metric-value">{{ metrics.kyc.decided_30d }}</div><div class="kpi-sub">last 30 days</div></div>
-      <div class="kpi-card"><div class="kpi-label">Median decision</div><div class="metric-value">{{ metrics.kyc.median_hours_to_decision }}h</div><div class="kpi-sub">submitted to decision</div></div>
-    </div>
-  </article>
-  <article class="dashboard-app">
-    <div class="dashboard-app-head"><h2><a href="/claims">Claims & refunds</a></h2><span class="sub">Customer decisions</span></div>
-    <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">Open claims</div><div class="metric-value">{{ metrics.claims.open_count }}</div><div class="kpi-sub">awaiting decision</div></div>
-      <div class="kpi-card"><div class="kpi-label">Approved</div><div class="metric-value">{{ metrics.claims.approved_30d }}</div><div class="kpi-sub">last 30 days</div></div>
-      <div class="kpi-card"><div class="kpi-label">Median decision</div><div class="metric-value">{{ metrics.claims.median_hours_to_decision }}h</div><div class="kpi-sub">submitted to decision</div></div>
-    </div>
-    <div class="open-value"><span class="kpi-label">Open value</span><div class="currency-values">{% for currency, amount in metrics.claims.open_value_by_currency.items() %}<span class="currency-value">{{ currency }} {{ "%.2f"|format(amount / 100) }}</span>{% else %}<span class="muted">No open value</span>{% endfor %}</div></div>
-  </article>
-  <article class="dashboard-app">
-    <div class="dashboard-app-head"><h2><a href="/flags">Feature flags</a></h2><span class="sub">Environment controls</span></div>
-    <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">Total flags</div><div class="metric-value">{{ metrics.flags.total }}</div></div>
-      <div class="kpi-card"><div class="kpi-label">Production</div><div class="metric-value">{{ metrics.flags.production }}</div></div>
-      <div class="kpi-card"><div class="kpi-label">Changes</div><div class="metric-value">{{ metrics.flags.changes_30d }}</div><div class="kpi-sub">last 30 days</div></div>
-    </div>
-  </article>
-  <article class="dashboard-app">
-    <div class="dashboard-app-head"><h2><a href="/access-reviews">Access reviews</a></h2><span class="sub">{{ metrics.access.quarter }}</span></div>
-    <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">Pending</div><div class="metric-value">{{ metrics.access.pending }}</div></div>
-      <div class="kpi-card"><div class="kpi-label">Certified</div><div class="metric-value">{{ metrics.access.certified }}</div></div>
-      <div class="kpi-card"><div class="kpi-label">Complete</div><div class="metric-value">{{ metrics.access.completion_pct }}%</div><div class="kpi-sub">{{ metrics.access.revoked }} revoked</div></div>
-    </div>
-  </article>
+<section class="dashboard-section">
+  <h2>Core apps</h2>
+  <div class="dashboard-apps core-apps">
+    {% for module in core_modules %}
+    <article class="dashboard-app">
+      <div class="dashboard-app-head"><h2><a href="{{ module.path }}">{{ module.title }}</a></h2></div>
+      <p class="replaces-label">Replaces: {{ module.replaces }}</p>
+      <div class="kpi-grid">
+        {% if module.key == "counterparties" %}
+        <div class="kpi-card"><div class="kpi-label">Pending</div><div class="metric-value">{{ metrics.kyc.pending }}</div><div class="kpi-sub">oldest {{ metrics.kyc.oldest_pending_days }} days</div></div>
+        <div class="kpi-card"><div class="kpi-label">Decided</div><div class="metric-value">{{ metrics.kyc.decided_30d }}</div><div class="kpi-sub">last 30 days</div></div>
+        <div class="kpi-card"><div class="kpi-label">Median decision</div><div class="metric-value">{{ metrics.kyc.median_hours_to_decision }}h</div><div class="kpi-sub">submitted to decision</div></div>
+        {% elif module.key == "claims" %}
+        <div class="kpi-card"><div class="kpi-label">Open claims</div><div class="metric-value">{{ metrics.claims.open_count }}</div><div class="kpi-sub">awaiting decision</div></div>
+        <div class="kpi-card"><div class="kpi-label">Approved</div><div class="metric-value">{{ metrics.claims.approved_30d }}</div><div class="kpi-sub">last 30 days</div></div>
+        <div class="kpi-card"><div class="kpi-label">Median decision</div><div class="metric-value">{{ metrics.claims.median_hours_to_decision }}h</div><div class="kpi-sub">submitted to decision</div></div>
+        {% else %}
+        <div class="kpi-card"><div class="kpi-label">Total flags</div><div class="metric-value">{{ metrics.flags.total }}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Production</div><div class="metric-value">{{ metrics.flags.production }}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Changes</div><div class="metric-value">{{ metrics.flags.changes_30d }}</div><div class="kpi-sub">last 30 days</div></div>
+        {% endif %}
+      </div>
+      {% if module.key == "claims" %}
+      <div class="open-value"><span class="kpi-label">Open value</span><div class="currency-values">{% for currency, amount in metrics.claims.open_value_by_currency.items() %}<span class="currency-value">{{ currency }} {{ "%.2f"|format(amount / 100) }}</span>{% else %}<span class="muted">No open value</span>{% endfor %}</div></div>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+</section>
+<section class="dashboard-section">
+  <h2>New apps</h2>
+  <div class="dashboard-apps new-apps">
+    {% for module in new_modules %}
+    <article class="dashboard-app">
+      <div class="dashboard-app-head"><h2><a href="{{ module.path }}">{{ module.title }}</a></h2><span class="sub">{{ metrics.access.quarter }}</span></div>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Pending</div><div class="metric-value">{{ metrics.access.pending }}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Certified</div><div class="metric-value">{{ metrics.access.certified }}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Complete</div><div class="metric-value">{{ metrics.access.completion_pct }}%</div><div class="kpi-sub">{{ metrics.access.revoked }} revoked</div></div>
+      </div>
+    </article>
+    {% endfor %}
+    <a class="dashboard-app dashboard-add-app" href="/apps#add">
+      <h2>Add an app</h2>
+      <p>Each new app reuses sign-in, permissions, reasons, version checks, audit, import and export.</p>
+      <span class="button secondary">View the module guide</span>
+    </a>
+  </div>
 </section>
 <section class="dashboard-section panel">
   <h2>Controls enforced (30 days)</h2>

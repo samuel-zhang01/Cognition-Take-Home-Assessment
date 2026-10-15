@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Security & controls · Operations Portal{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><h1>Security & controls</h1><p>What is enforced now, what it counts, and what production still needs.</p></div>
+</div>
+<section class="panel dashboard-section">
+  <h2>Enforced in every app</h2>
+  <div class="table-wrap"><table class="security-table">
+    <thead><tr><th>Control</th><th>How it works</th><th>Where</th></tr></thead>
+    <tbody>
+      <tr><td>Server-side permissions</td><td>Protected API reads and writes are checked against the signed-in user's role. Page views require a valid session.</td><td><code>permissions.py</code>, <code>require_permission</code></td></tr>
+      <tr><td>Reasons for changes</td><td>Record changes require a reason of 3 to 500 characters.</td><td><code>run_command</code>, import endpoint</td></tr>
+      <tr><td>Version checks</td><td>Record changes include the expected version; stale edits are rejected.</td><td><code>run_command</code></td></tr>
+      <tr><td>Audit trail</td><td>A record change and its audit entry commit together. The actor comes from the signed-in session.</td><td><code>run_command</code>, <code>write_audit</code></td></tr>
+      <tr><td>Import and export records</td><td>Successful imports and exports each write an audit event.</td><td><code>data_transfer.py</code></td></tr>
+      <tr><td>Safe imports</td><td>Rows are validated before commit; one invalid row prevents the whole batch.</td><td><code>dataio.py</code>, <code>data_transfer.py</code></td></tr>
+      <tr><td>Session expiry</td><td>Sessions expire after 8 hours by default. The limit is configurable.</td><td><code>SESSION_TTL_HOURS</code></td></tr>
+      <tr><td>Sign-in rate limit</td><td>After five failed attempts per username and client IP, further attempts are blocked for 15 minutes.</td><td><code>auth.py</code>, <code>main.py</code></td></tr>
+      <tr><td>Session cookie</td><td>HttpOnly and SameSite=Lax; Secure is set for HTTPS requests.</td><td><code>main.py</code>, <code>auth.py</code></td></tr>
+      <tr><td>Password storage</td><td>PBKDF2-HMAC-SHA256 with a random 16-byte salt and 120,000 iterations.</td><td><code>auth.py</code></td></tr>
+      <tr><td>Blocked change attempts</td><td>Forbidden, stale, invalid, and failed-validation events appear in the dashboard counts.</td><td><code>control_events</code>, <code>metrics.py</code></td></tr>
+    </tbody>
+  </table></div>
+</section>
+<section class="panel dashboard-section">
+  <h2>Live control counts</h2>
+  <p class="muted">Events recorded in the last 30 days.</p>
+  <div class="kpi-grid security-counts">
+    <article class="kpi-card"><div class="kpi-label">Forbidden</div><div class="metric-value">{{ metrics.controls.forbidden }}</div></article>
+    <article class="kpi-card"><div class="kpi-label">Stale version</div><div class="metric-value">{{ metrics.controls.stale_version }}</div></article>
+    <article class="kpi-card"><div class="kpi-label">Invalid transition</div><div class="metric-value">{{ metrics.controls.invalid_transition }}</div></article>
+    <article class="kpi-card"><div class="kpi-label">Validation failed</div><div class="metric-value">{{ metrics.controls.validation_failed }}</div></article>
+    <article class="kpi-card"><div class="kpi-label">Imports</div><div class="metric-value">{{ metrics.imports_30d }}</div></article>
+    <article class="kpi-card"><div class="kpi-label">Exports</div><div class="metric-value">{{ metrics.exports_30d }}</div></article>
+  </div>
+</section>
+<section class="panel dashboard-section">
+  <h2>Needed before production</h2>
+  <div class="table-wrap"><table class="security-table">
+    <thead><tr><th>Gap</th><th>What Power Apps provides today</th><th>What a production build needs</th></tr></thead>
+    <tbody>
+      <tr><td>SSO and MFA</td><td>Entra ID and Conditional Access</td><td>Entra ID OIDC integration.</td></tr>
+      <tr><td>CSRF protection</td><td>Platform-managed</td><td>CSRF tokens on forms.</td></tr>
+      <tr><td>Data loss prevention</td><td>DLP policies</td><td>Equivalent egress controls.</td></tr>
+      <tr><td>Hosting, backups and recovery</td><td>Managed</td><td>Managed database, backups, a tested restore.</td></tr>
+      <tr><td>Encryption at rest</td><td>Managed</td><td>Encrypted managed database.</td></tr>
+      <tr><td>Audit retention</td><td>Purview/Dataverse auditing</td><td>An immutable log store with retention.</td></tr>
+      <tr><td>Monitoring and alerting</td><td>Platform</td><td>Logs, alerts, on-call.</td></tr>
+      <tr><td>Independent security review</td><td>Microsoft compliance</td><td>Pen test and code review.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+<p class="muted">Shared controls are written once and reused by every app, so each new app inherits them.</p>
+{% endblock %}
