@@ -86,3 +86,7 @@ The Access reviews module was added by following these steps. Its focused implem
 ## Limitations
 
 This is a local prototype, not a production service. For any shared or public deployment, set `SHOW_DEMO_ACCOUNTS=0` and a non-default `DEMO_PASSWORD` before the first seed. It has no enterprise SSO, MFA, CSRF protection, managed hosting, backups, monitoring, or tamper-evident audit retention. It has no live insurer, payment, flag-provider, or identity integrations. Claim approval records an operational decision; the payments system remains responsible for payout. Production use requires security review, data migration and retention decisions, ownership planning, incident response, and evidence from a measured pilot.
+
+## Evaluation and recommendation
+
+The [working evaluation](<4. Eval and Recommend/0.evaluation-and-recommendation.md>) develops Samuel's preference for gradual migration out of Power Apps, compares full replacement with the code-app hybrid, and includes his reported $13.13 Devin spend and two-prompt build. The [claim checks](<4. Eval and Recommend/resonings/0.claim-checks.md>) explain the evidence, corrections, cost assumptions and version boundaries behind that position.
