@@ -74,6 +74,12 @@ docker run --rm -p 8000:8000 -v "$PWD/data:/data" ops-portal
 
 The container stores data at `/data/portal.db`. Mount a persistent directory. For shared or public use, set the deployment configuration below before the first seed.
 
+## Deploy to Render
+
+`render.yaml` defines a free Render web service built from the Dockerfile. In Render, choose **New > Blueprint**, connect this repository, and enter a private `DEMO_PASSWORD` when prompted. The service hides the account list on the sign-in page and sets Secure cookies.
+
+The free plan has no persistent disk: the database is reseeded whenever the service restarts or redeploys, and the service sleeps after 15 minutes without traffic. Pushes to `main` redeploy automatically.
+
 ## Accounts
 
 The default password for all accounts is `demo`; `DEMO_PASSWORD` can override it before the database is first seeded.

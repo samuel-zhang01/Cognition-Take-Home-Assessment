@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: ops-portal
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /login
+    envVars:
+      - key: SHOW_DEMO_ACCOUNTS
+        value: "0"
+      - key: PORTAL_COOKIE_SECURE
+        value: "1"
+      - key: DEMO_PASSWORD
+        sync: false
