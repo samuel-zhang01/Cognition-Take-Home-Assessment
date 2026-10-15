@@ -17,7 +17,7 @@ The dashboard summarizes each workflow, recent in-scope activity, import and exp
 
 ## Build rounds
 
-The initial prototype ran from 2026-10-15T17:17:23Z to 2026-10-15T17:28:16Z, about 11 minutes. The refinement round ran from 2026-10-15T17:47:07Z to the last refinement commit recorded in the delivery log. The 0.9-minute Access Reviews measurement, 17:48:17Z to 17:49:11Z, only covered applying an already written module spec; it is not used as build time. The change was 10 files changed, 205 insertions(+), 5 deletions(-).
+The initial prototype ran from 2026-10-15T17:17:23Z to 2026-10-15T17:28:16Z, about 11 minutes. The refinement round ran from 2026-10-15T17:47:07Z to 2026-10-15T18:17:48Z, about 31 minutes; together the rounds took 42 wall-clock minutes. The 0.9-minute Access Reviews measurement, 17:48:17Z to 17:49:11Z, only covered applying an already written module spec; it is not used as build time. The change was 10 files changed, 205 insertions(+), 5 deletions(-).
 
 Rounds were timed from brief to last commit. Commits were batched, so per-commit timing is not meaningful. Human time was not measured.
 

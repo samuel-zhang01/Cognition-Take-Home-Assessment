@@ -29,17 +29,18 @@
     {
       "name": "Refinement",
       "start": "2026-10-15T17:47:07+00:00",
-      "end": "2026-10-15T18:08:48+00:00",
-      "wall_clock_minutes": 21.7,
+      "end": "2026-10-15T18:17:48+00:00",
+      "wall_clock_minutes": 30.7,
       "human_time": null,
       "commits": [
         {"hash": "30cf640", "summary": "Add Access reviews using the module guide (D029)", "time": "2026-10-15T18:00:44+00:00"},
         {"hash": "bbce6e4", "summary": "Harden login, session expiry, cookies and seed initialization", "time": "2026-10-15T18:06:50+00:00"},
         {"hash": "7559c58", "summary": "Add import/export, control metrics, dashboard and business case", "time": "2026-10-15T18:07:05+00:00"},
-        {"hash": "d1dbc70", "summary": "Record refinement evidence and deployment guidance (D027-D031)", "time": "2026-10-15T18:08:48+00:00"}
+        {"hash": "d1dbc70", "summary": "Record refinement evidence and deployment guidance (D027-D031)", "time": "2026-10-15T18:08:48+00:00"},
+        {"hash": "6e5a372", "summary": "Correct round timing and polish portal presentation", "time": "2026-10-15T18:17:48+00:00"}
       ],
       "checks": [
-        ".venv/bin/pytest -q: 22 passed, 1 warning",
+        ".venv/bin/pytest -q: 22 passed, 1 warning in 5.54s",
         "docker build -t ops-portal .: passed",
         "Curl page checks passed after fixing flags template query"
       ]
