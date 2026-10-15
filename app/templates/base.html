@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Shared Operations Portal{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="banner">Demo authentication (not SSO) · Synthetic data · Insurance proxy for fintech tools</div>
+  <header class="site-header">
+    <a class="brand" href="/">Shared Operations Portal</a>
+    {% if user %}
+    <nav>
+      {% for module in modules %}<a href="{{ module.path }}">{{ module.title }}</a>{% endfor %}
+    </nav>
+    <div class="identity">
+      <span>{{ user.display_name }} <small>({{ user.role|replace("_", " ") }})</small></span>
+      <form method="post" action="/logout"><button class="link-button" type="submit">Log out</button></form>
+    </div>
+    {% endif %}
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+  <script src="/static/app.js"></script>
+</body>
+</html>
