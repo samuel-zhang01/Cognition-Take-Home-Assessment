@@ -25,7 +25,7 @@ def list_flags(conn, status=None):
     return [
         {**dict(row), "enabled": bool(row["enabled"])}
         for row in conn.execute(
-            """SELECT f.*, event.at AS last_changed_at,
+            f"""SELECT f.*, event.at AS last_changed_at,
                       event.actor_username AS last_changed_by,
                       event.reason AS last_change_reason
                FROM flags f
