@@ -38,10 +38,10 @@ MODULES = (
     ),
     ModuleSpec(
         "audit",
-        "Cross-tool audit (shared foundation)",
+        "Shared audit",
         "/audit",
         "Review the shared, role-scoped history of operational changes.",
         "Auditor",
-        "Shared audit",
+        "Cross-tool audit (shared foundation)",
     ),
 )
