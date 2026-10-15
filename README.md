@@ -90,3 +90,5 @@ This is a local prototype, not a production service. For any shared or public de
 ## Evaluation and recommendation
 
 The [working evaluation](<4. Eval and Recommend/0.evaluation-and-recommendation.md>) develops Samuel's preference for gradual migration out of Power Apps, compares full replacement with the code-app hybrid, and includes his reported $13.13 Devin spend and two-prompt build. The [claim checks](<4. Eval and Recommend/resonings/0.claim-checks.md>) explain the evidence, corrections, cost assumptions and version boundaries behind that position.
+
+The [third interview](<1. Research/evidence/interview-3-knowledge-and-collaboration.md>) adds knowledge access and collaboration: testing whether supported codebase answers reduce search effort, engineering interruptions and waiting, including when Power Apps is retained.

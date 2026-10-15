@@ -75,3 +75,7 @@ Report maintenance coverage as `tools with an accepted owner, access, runbook an
 - What cash can be committed during the overlap period, and how much recurring internal maintenance capacity is approved?
 
 The interview strengthens the case for testing capacity relief and knowledge transfer. It does not settle build versus buy, prove spare capacity, establish savings or make maintenance a one-time activity.
+
+## Subsequent interview on knowledge access
+
+Samuel later supplied a [third interview from a non-engineering perspective](interview-3-knowledge-and-collaboration.md). It adds the possibility of reducing repeated questions, search effort and waiting through a shared knowledge service. Its provenance and vendor-capability checks are recorded separately so its observations are not attributed to this earlier excerpt. It also distinguishes work visibility from production observability and benefits of adopting Devin from benefits of retiring Power Apps.
