@@ -34,20 +34,20 @@ def seed_if_empty(db_path):
                 [(*item, now) for item in counterparties],
             )
             evidence = [
-                ("EV-001", "CP-001", "financial_strength_opinion", "Synthetic Rating Agency A", "rating_agency_opinion", "Northwind Mutual Assurance", "A- (synthetic)", "2025-01-15"),
-                ("EV-002", "CP-001", "observed_payout_history", "Synthetic Internal Ledger", "internal_payout_records", "UK motor claims cohort", "212 claims paid, median 9 days (synthetic)", "2025-02-01"),
-                ("EV-003", "CP-002", "financial_strength_opinion", "Synthetic Rating Agency B", "rating_agency_opinion", "Harborlight Claims Services", "BBB+ (synthetic)", "2025-01-20"),
-                ("EV-004", "CP-002", "observed_payout_history", "Synthetic Internal Ledger", "internal_payout_records", "UK home claims cohort", "86 claims paid, median 12 days (synthetic)", "2025-02-04"),
-                ("EV-005", "CP-003", "financial_strength_opinion", "Synthetic Rating Agency A", "rating_agency_opinion", "Juniper Shield Cooperative", "A (synthetic)", "2025-01-10"),
-                ("EV-006", "CP-003", "observed_payout_history", "Synthetic Internal Ledger", "internal_payout_records", "US claims cohort", "145 claims paid, median 11 days (synthetic)", "2025-01-29"),
-                ("EV-007", "CP-004", "financial_strength_opinion", "Synthetic Rating Agency C", "rating_agency_opinion", "Meridian Cover Group", "A (synthetic)", "2025-01-13"),
-                ("EV-008", "CP-004", "observed_payout_history", "Synthetic Internal Ledger", "internal_payout_records", "EU claims cohort", "301 claims paid, median 8 days (synthetic)", "2025-02-02"),
+                ("EV-001", "CP-001", "financial_strength_opinion", "Synthetic Rating Agency A", "rating_agency_opinion", "Northwind Mutual Assurance", "A- (synthetic)", "2025-01-15", "SYNTHETIC FIXTURE - not a real rating"),
+                ("EV-002", "CP-001", "observed_payout_history", "Synthetic Internal Ledger", "internal_payout_records", "UK motor claims cohort", "212 claims paid, median 9 days (synthetic)", "2025-02-01", "SYNTHETIC FIXTURE - not real payout data"),
+                ("EV-003", "CP-002", "financial_strength_opinion", "Synthetic Rating Agency B", "rating_agency_opinion", "Harborlight Claims Services", "BBB+ (synthetic)", "2025-01-20", "SYNTHETIC FIXTURE - not a real rating"),
+                ("EV-004", "CP-002", "observed_payout_history", "Synthetic Internal Ledger", "internal_payout_records", "UK home claims cohort", "86 claims paid, median 12 days (synthetic)", "2025-02-04", "SYNTHETIC FIXTURE - not real payout data"),
+                ("EV-005", "CP-003", "financial_strength_opinion", "Synthetic Rating Agency A", "rating_agency_opinion", "Juniper Shield Cooperative", "A (synthetic)", "2025-01-10", "SYNTHETIC FIXTURE - not a real rating"),
+                ("EV-006", "CP-003", "observed_payout_history", "Synthetic Internal Ledger", "internal_payout_records", "US claims cohort", "145 claims paid, median 11 days (synthetic)", "2025-01-29", "SYNTHETIC FIXTURE - not real payout data"),
+                ("EV-007", "CP-004", "financial_strength_opinion", "Synthetic Rating Agency C", "rating_agency_opinion", "Meridian Cover Group", "A (synthetic)", "2025-01-13", "SYNTHETIC FIXTURE - not a real rating"),
+                ("EV-008", "CP-004", "observed_payout_history", "Synthetic Internal Ledger", "internal_payout_records", "EU claims cohort", "301 claims paid, median 8 days (synthetic)", "2025-02-02", "SYNTHETIC FIXTURE - not real payout data"),
             ]
             conn.executemany(
                 """INSERT INTO counterparty_evidence
                    (id, counterparty_id, evidence_type, source, source_type,
                     rated_entity_or_market, value, as_of, provenance)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'SYNTHETIC FIXTURE - not a real rating')""",
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 evidence,
             )
             claims = [
