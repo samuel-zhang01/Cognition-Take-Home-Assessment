@@ -1,6 +1,6 @@
 import sqlite3
 from dataclasses import dataclass
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, DecimalException, InvalidOperation
 from typing import Callable, Literal
 
 
@@ -181,8 +181,11 @@ def parse_value(column, value):
             raise ValueError("Enter a non-negative amount.")
         if number.as_tuple().exponent < -2:
             raise ValueError("Enter an amount with no more than 2 decimal places.")
-        if number * 100 > SQLITE_MAX_INTEGER:
-            raise ValueError("The amount exceeds the supported range.")
+        try:
+            if abs(number) > Decimal(SQLITE_MAX_INTEGER) / 100:
+                raise ValueError("The amount exceeds the supported range.")
+        except DecimalException as exc:
+            raise ValueError("The amount exceeds the supported range.") from exc
         return number
     if column.kind == "date":
         from datetime import date
@@ -203,6 +206,24 @@ def validate_rows(conn, spec, reader):
     errors = []
     seen = set()
     fieldnames = reader.fieldnames or []
+    seen_headers = set()
+    reported_duplicates = set()
+    duplicate_headers = []
+    for fieldname in fieldnames:
+        if fieldname in seen_headers and fieldname not in reported_duplicates:
+            duplicate_headers.append(fieldname)
+            reported_duplicates.add(fieldname)
+        seen_headers.add(fieldname)
+    if duplicate_headers:
+        return [], [
+            {
+                "row": 1,
+                "column": fieldname or "header",
+                "message": "Duplicate column.",
+            }
+            for fieldname in duplicate_headers
+        ]
+
     known_columns = {column.name for column in spec.columns}
     for fieldname in fieldnames:
         if fieldname not in known_columns:

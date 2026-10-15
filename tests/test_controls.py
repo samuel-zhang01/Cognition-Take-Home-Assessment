@@ -429,8 +429,10 @@ def test_import_dry_run_reports_sample_errors_and_writes_nothing(client, db_path
     assert db_rows(db_path, "SELECT COUNT(*) AS n FROM control_events")[0]["n"] == before_controls
 
 
-@pytest.mark.parametrize("amount", ["10.009", "NaN", "Infinity"])
-def test_claim_import_rejects_fractional_cents_and_nonfinite_amounts(client, amount):
+@pytest.mark.parametrize("amount", ["10.009", "NaN", "Infinity", "1e999999"])
+def test_claim_import_rejects_fractional_cents_nonfinite_and_oversized_amounts(
+    client, amount
+):
     claims_operator = login(client, "colin.claims")
     content = (
         "id,counterparty_id,claimant_ref,claim_type,description,amount,currency,submitted_at\n"
@@ -504,6 +506,36 @@ def test_import_rejects_unknown_columns_and_extra_csv_fields(client, db_path):
         for error in extra_field["errors"]
     )
     assert extra_field["committed"] is False
+    assert db_rows(
+        db_path, "SELECT COUNT(*) AS n FROM counterparties"
+    )[0]["n"] == before_counterparties
+
+
+def test_import_rejects_duplicate_known_header(client, db_path):
+    reviewer = login(client, "rita.reviewer")
+    before_counterparties = db_rows(
+        db_path, "SELECT COUNT(*) AS n FROM counterparties"
+    )[0]["n"]
+    content = (
+        "id,id,name,kind,country,registration_number,risk_tier,"
+        "assigned_reviewer,submitted_at\n"
+        "CP-FIRST,CP-LAST,Example Mutual,insurer,United Kingdom,"
+        "GB-100,low,rita.reviewer,2026-10-15\n"
+    )
+
+    response = upload_csv_content(
+        reviewer, "counterparties", "duplicate-header.csv", content
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "rows": 0,
+        "valid": 0,
+        "errors": [
+            {"row": 1, "column": "id", "message": "Duplicate column."}
+        ],
+        "committed": False,
+    }
     assert db_rows(
         db_path, "SELECT COUNT(*) AS n FROM counterparties"
     )[0]["n"] == before_counterparties
