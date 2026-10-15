@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Business case · Operations Portal{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><h1>Business case</h1><p>Test the economics against measured inputs and operational trade-offs.</p></div>
+</div>
+<section class="panel">
+  <h2>Cost calculator</h2>
+  <p class="muted">Inputs in USD thousands per year unless marked one-time.</p>
+  <div class="calculator-grid" id="business-case-calculator">
+    <label>Avoidable annual spend, S<input type="number" min="0" step="1" value="250" data-input="S"></label>
+    <label>One-time transition, B<input type="number" min="0" step="1" value="100" data-input="B"></label>
+    <label>Annual recurring ownership, R<input type="number" min="0" step="1" value="100" data-input="R"></label>
+    <label>Years<input type="number" min="1" step="1" value="3" data-input="years"></label>
+    <label>Loaded engineer-year cost<input type="number" min="1" step="1" value="250" data-input="loadedCost"></label>
+    <label>Non-labor recurring cost<input type="number" min="0" step="1" value="40" data-input="nonLabor"></label>
+  </div>
+  <div class="preset-row">
+    <button type="button" data-preset="250,100,100">Shared foundation works</button>
+    <button type="button" data-preset="250,200,200">Heavier build and ownership</button>
+    <button type="button" data-preset="100,100,100">Only part of the bill is avoidable</button>
+    <button type="button" data-preset="250,150,290">One extra engineer-year</button>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-label">Net over period</div><div class="metric-value" data-output="net">-</div><div class="kpi-sub">USD thousands</div></div>
+    <div class="kpi-card"><div class="kpi-label">Payback</div><div class="metric-value" data-output="payback">-</div><div class="kpi-sub">months</div></div>
+    <div class="kpi-card"><div class="kpi-label">Break-even R</div><div class="metric-value" data-output="breakEven">-</div><div class="kpi-sub">USD thousands per year</div></div>
+    <div class="kpi-card"><div class="kpi-label">Capacity ceiling</div><div class="metric-value" data-output="capacity">-</div><div class="kpi-sub">engineer-years per year</div></div>
+  </div>
+  <p class="muted">Net = years × S − B − years × R. Payback months = B / (S − R) × 12 when S &gt; R. Break-even R = S − B / years. Capacity ceiling = (S − non-labor − B / years) / loaded engineer-year cost.</p>
+  <p class="muted">Inputs are planning assumptions, not quotes. Savings start only when licences actually end.</p>
+</section>
+<section class="panel dashboard-section">
+  <h2>Five decision lenses</h2>
+  <div class="table-wrap"><table class="lens-table">
+    <thead><tr><th>Lens</th><th>Status</th><th>Evidence and open question</th></tr></thead>
+    <tbody>
+      <tr><td>Cost and flexibility</td><td>Untested</td><td>Needs the invoice, renewal date and which charges actually stop. The calculator shows how sensitive the result is.</td></tr>
+      <tr><td>Customization and fit</td><td>Demonstrated</td><td>Four apps share one permission, audit and data layer. Access reviews was added by following the module guide in {{ measured_minutes }} minutes. Operator acceptance is untested.</td></tr>
+      <tr><td>Skills and capacity</td><td>Demonstrated</td><td>The delivery log records elapsed and human time for every accepted change. Named owners and their available hours are untested.</td></tr>
+      <tr><td>Maintainability and training</td><td>Partly demonstrated</td><td>Module guide, tests and a reviewable PR exist. A change by a second engineer is untested.</td></tr>
+      <tr><td>Delivery model</td><td>Documented</td><td>Cognition offers assisted delivery in some engagements. This customer's offer, fees and handover are untested.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+<section class="panel dashboard-section">
+  <h2>What Power Apps provides that this portal does not</h2>
+  <ul class="link-list">
+    <li>maker tools for non-engineers</li>
+    <li>managed Entra ID sign-in and Conditional Access</li>
+    <li>prebuilt connectors</li>
+    <li>DLP and environment governance</li>
+    <li>managed hosting and backups</li>
+  </ul>
+</section>
+<section class="panel recommendation dashboard-section">
+  <h2>Recommendation</h2>
+  <p>Audit and right-size the $250K first. Run a measured pilot on one workflow. Decide on migration using the measured S, B and R.</p>
+</section>
+{% endblock %}
+{% block extra_scripts %}<script src="/static/business_case.js"></script>{% endblock %}

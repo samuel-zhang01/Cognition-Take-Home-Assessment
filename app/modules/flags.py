@@ -19,10 +19,23 @@ class ChangeFlagRequest(BaseModel):
     expected_version: int
 
 
-def list_flags(conn):
+def list_flags(conn, status=None):
+    status_filter = " WHERE f.enabled = ?" if status in {"on", "off"} else ""
+    args = (1 if status == "on" else 0,) if status_filter else ()
     return [
         {**dict(row), "enabled": bool(row["enabled"])}
-        for row in conn.execute("SELECT * FROM flags ORDER BY key").fetchall()
+        for row in conn.execute(
+            """SELECT f.*, event.at AS last_changed_at,
+                      event.actor_username AS last_changed_by,
+                      event.reason AS last_change_reason
+               FROM flags f
+               LEFT JOIN audit_events event ON event.id = (
+                   SELECT MAX(a.id) FROM audit_events a
+                   WHERE a.module = 'flags' AND a.resource_id = f.key
+               )
+               {status_filter} ORDER BY f.key""",
+            args,
+        ).fetchall()
     ]
 
 
@@ -60,7 +73,9 @@ def change_flag(
 
 
 @router.get("/flags")
-def flags_page(request: Request, conn=Depends(get_connection)):
+def flags_page(
+    request: Request, status: str | None = None, conn=Depends(get_connection)
+):
     user = page_user(request, conn)
     if user is None:
         return RedirectResponse("/login", status_code=303)
@@ -69,5 +84,6 @@ def flags_page(request: Request, conn=Depends(get_connection)):
         "flags.html",
         user=user,
         permissions=ROLE_PERMISSIONS[user["role"]],
-        flags=list_flags(conn),
+        flags=list_flags(conn, status),
+        selected_status=status or "",
     )

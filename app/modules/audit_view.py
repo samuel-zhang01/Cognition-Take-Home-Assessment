@@ -14,7 +14,7 @@ def api_audit(
     module: str | None = None,
     resource_id: str | None = None,
     conn=Depends(get_connection),
-    user=Depends(require_permission("audit.read")),
+    user=Depends(require_permission("modules.read")),
 ):
     return list_audit(conn, user, module=module, resource_id=resource_id)
 

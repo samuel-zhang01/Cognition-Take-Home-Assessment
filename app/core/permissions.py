@@ -6,6 +6,7 @@ ROLE_PERMISSIONS = {
         "flag.read",
         "audit.read",
         "counterparty.review",
+        "counterparties.import",
     },
     "claims_operator": {
         "modules.read",
@@ -14,6 +15,7 @@ ROLE_PERMISSIONS = {
         "flag.read",
         "audit.read",
         "claim.approve",
+        "claims.import",
     },
     "flag_operator": {
         "modules.read",
@@ -41,6 +43,6 @@ AUDIT_SCOPE = {
     "reviewer": {"counterparties"},
     "claims_operator": {"claims"},
     "flag_operator": {"flags"},
-    "auditor": {"counterparties", "claims", "flags"},
+    "auditor": {"counterparties", "claims", "flags", "access_reviews", "audit"},
     "access_reviewer": {"access_reviews"},
 }

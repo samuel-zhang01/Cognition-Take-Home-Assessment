@@ -1,29 +1,62 @@
 {% extends "base.html" %}
-{% block title %}Shared Operations Portal{% endblock %}
+{% block title %}Dashboard · Operations Portal{% endblock %}
 {% block content %}
-<section class="intro">
-  <p class="eyebrow">Internal prototype · one shared foundation</p>
-  <h1>Shared operations portal</h1>
-  <p>Three thin operational workflows built on demo authentication, server-side permissions, persistent storage, and one audit log.</p>
-</section>
-<section class="cards">
-  {% for module in modules %}
-  <a class="card" href="{{ module.path }}">
-    <span class="tag">Proxy for {{ module.proxy_for }}</span>
-    <h2>{{ module.title }}</h2>
-    <p>{{ module.description }}</p>
-    <small>Owner: {{ module.owner }}</small>
-  </a>
-  {% endfor %}
-  <article class="card planned">
-    <span class="tag">Planned</span>
-    <h2>Next tool (not built)</h2>
-    <p>A future shared operations tool can reuse the same authentication, permissions, persistence, and audit controls.</p>
-    <small>Clearly not available in this prototype</small>
+<div class="page-heading">
+  <div><h1>Dashboard</h1><p>Operational status across the shared tools.</p></div>
+</div>
+<section class="dashboard-apps">
+  <article class="dashboard-app">
+    <div class="dashboard-app-head"><h2><a href="/counterparties">Counterparty reviews</a></h2><span class="sub">KYC queue</span></div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">Pending</div><div class="metric-value">{{ metrics.kyc.pending }}</div><div class="kpi-sub">oldest {{ metrics.kyc.oldest_pending_days }} days</div></div>
+      <div class="kpi-card"><div class="kpi-label">Decided</div><div class="metric-value">{{ metrics.kyc.decided_30d }}</div><div class="kpi-sub">last 30 days</div></div>
+      <div class="kpi-card"><div class="kpi-label">Median decision</div><div class="metric-value">{{ metrics.kyc.median_hours_to_decision }}h</div><div class="kpi-sub">submitted to decision</div></div>
+    </div>
+  </article>
+  <article class="dashboard-app">
+    <div class="dashboard-app-head"><h2><a href="/claims">Claims & refunds</a></h2><span class="sub">Customer decisions</span></div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">Open claims</div><div class="metric-value">{{ metrics.claims.open_count }}</div><div class="kpi-sub">awaiting decision</div></div>
+      <div class="kpi-card"><div class="kpi-label">Approved</div><div class="metric-value">{{ metrics.claims.approved_30d }}</div><div class="kpi-sub">last 30 days</div></div>
+      <div class="kpi-card"><div class="kpi-label">Median decision</div><div class="metric-value">{{ metrics.claims.median_hours_to_decision }}h</div><div class="kpi-sub">submitted to decision</div></div>
+    </div>
+    <div class="currency-values">{% for currency, amount in metrics.claims.open_value_by_currency.items() %}<span class="currency-value">{{ currency }} {{ "%.2f"|format(amount / 100) }}</span>{% else %}<span class="muted">No open value</span>{% endfor %}</div>
+  </article>
+  <article class="dashboard-app">
+    <div class="dashboard-app-head"><h2><a href="/flags">Feature flags</a></h2><span class="sub">Environment controls</span></div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">Total flags</div><div class="metric-value">{{ metrics.flags.total }}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Production</div><div class="metric-value">{{ metrics.flags.production }}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Changes</div><div class="metric-value">{{ metrics.flags.changes_30d }}</div><div class="kpi-sub">last 30 days</div></div>
+    </div>
+  </article>
+  <article class="dashboard-app">
+    <div class="dashboard-app-head"><h2><a href="/access-reviews">Access reviews</a></h2><span class="sub">{{ metrics.access.quarter }}</span></div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">Pending</div><div class="metric-value">{{ metrics.access.pending }}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Certified</div><div class="metric-value">{{ metrics.access.certified }}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Complete</div><div class="metric-value">{{ metrics.access.completion_pct }}%</div><div class="kpi-sub">{{ metrics.access.revoked }} revoked</div></div>
+    </div>
   </article>
 </section>
-<section class="callout">
-  <strong>Demo users:</strong> rita.reviewer, colin.claims, fiona.flags, aaron.auditor
-  <span>All demo passwords: <code>demo</code> (or the configured DEMO_PASSWORD).</span>
+<section class="dashboard-section panel">
+  <h2>Controls enforced (30 days)</h2>
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-label">Forbidden</div><div class="metric-value">{{ metrics.controls.forbidden }}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Stale version</div><div class="metric-value">{{ metrics.controls.stale_version }}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Invalid transition</div><div class="metric-value">{{ metrics.controls.invalid_transition }}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Validation failed</div><div class="metric-value">{{ metrics.controls.validation_failed }}</div></div>
+  </div>
+  <p class="muted">{{ metrics.imports_30d }} imports and {{ metrics.exports_30d }} exports in the last 30 days.</p>
+</section>
+<section class="dashboard-section">
+  <div class="page-heading"><div><h2>Recent activity</h2><p>Latest changes within your audit scope.</p></div><a href="/audit">View audit log</a></div>
+  {% if recent_activity %}
+  <div class="table-wrap"><table class="audit-table"><thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Resource</th><th>Reason</th></tr></thead><tbody>
+    {% for event in recent_activity %}
+    <tr><td>{{ event.at[:10] }} {{ event.at[11:19] }} UTC</td><td>{{ event.actor_username }}</td><td>{{ event.action|replace("_", " ") }}</td><td><a href="/audit?module={{ event.module }}&resource_id={{ event.resource_id }}">{{ event.resource_type }} <span class="id">{{ event.resource_id }}</span></a></td><td>{{ event.reason }}</td></tr>
+    {% endfor %}
+  </tbody></table></div>
+  {% else %}<div class="panel muted">No recent events in your scope.</div>{% endif %}
 </section>
 {% endblock %}

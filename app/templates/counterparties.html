@@ -1,12 +1,19 @@
 {% extends "base.html" %}
-{% block title %}Insurance counterparties{% endblock %}
+{% block title %}Counterparty reviews{% endblock %}
 {% block content %}
-<div class="page-heading"><div><p class="eyebrow">Proxy for KYC review queue</p><h1>Insurance counterparties</h1></div></div>
-<p class="notice">Synthetic fixture evidence only. Rating opinions and observed payout history are separate evidence types; there is no combined score.</p>
+<div class="page-heading">
+  <div><h1>Counterparty reviews</h1><p>Review insurer, reinsurer, and claims service onboarding.</p></div>
+  <div class="page-actions"><a class="button secondary" href="/api/export/counterparties.csv">Export CSV</a></div>
+</div>
+<div class="filters">
+  <label>Status<select onchange="location.href='?status='+encodeURIComponent(this.value)"><option value="">All statuses</option>{% for value in ["pending_review", "approved", "rejected"] %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ value|replace("_", " ")|title }}</option>{% endfor %}</select></label>
+  <label class="search-box">Search<input type="search" data-table-search placeholder="Name, country, registration"></label>
+</div>
 <div class="table-wrap"><table>
-  <thead><tr><th>Counterparty</th><th>Type</th><th>Market</th><th>Status</th><th>Linked claims</th></tr></thead>
+  <thead><tr><th>Counterparty</th><th>Type</th><th>Country</th><th>Risk</th><th>Reviewer</th><th>Status</th><th>Claims</th></tr></thead>
   <tbody>{% for item in counterparties %}
-  <tr><td><a href="/counterparties/{{ item.id }}">{{ item.name }}</a><small class="sub">{{ item.id }}</small></td><td>{{ item.kind|replace("_", " ") }}</td><td>{{ item.market }}</td><td><span class="status {{ item.status }}">{{ item.status|replace("_", " ") }}</span></td><td>{{ item.linked_claims }}</td></tr>
+  <tr data-href="/counterparties/{{ item.id }}"><td><a href="/counterparties/{{ item.id }}">{{ item.name }}</a><small class="sub id">{{ item.id }} · {{ item.registration_number }}</small></td><td>{{ item.kind|title }}</td><td>{{ item.country }}</td><td><span class="status {{ item.risk_tier }}">{{ item.risk_tier|title }}</span></td><td>{{ item.assigned_reviewer }}</td><td><span class="status {{ item.status }}">{{ item.status|replace("_", " ") }}</span></td><td>{{ item.linked_claims }}</td></tr>
+  {% else %}<tr><td colspan="7">No counterparties match this filter.</td></tr>
   {% endfor %}</tbody>
 </table></div>
 {% endblock %}

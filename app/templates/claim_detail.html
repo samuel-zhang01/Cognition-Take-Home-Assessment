@@ -1,20 +1,38 @@
 {% extends "base.html" %}
 {% block title %}{{ claim.id }} · Claims{% endblock %}
 {% block content %}
-<p class="eyebrow"><a href="/claims">← Claims</a></p>
-<div class="page-heading"><div><h1>{{ claim.id }}</h1><p>{{ claim.description }} · {{ claim.claimant_ref }}</p></div><span class="status {{ claim.status }}">{{ claim.status|replace("_", " ") }}</span></div>
-<p class="notice"><strong>Simulated approval — no money moves; not settlement.</strong> Counterparty status is context only; there is no approval dependency.</p>
-<section class="panel">
-  <dl class="facts"><dt>Amount</dt><dd>{{ claim.currency }} {{ "%.2f"|format(claim.amount_minor / 100) }}</dd><dt>Counterparty</dt><dd><a href="/counterparties/{{ claim.counterparty_id }}">{{ claim.counterparty_name }} ({{ claim.counterparty_id }})</a></dd><dt>Counterparty status</dt><dd>{{ claim.counterparty_status|replace("_", " ") }} (context only)</dd></dl>
-</section>
-{% if "claim.approve" in permissions and claim.status == "submitted" %}
-<section class="panel action-panel"><h2>Simulate claim approval</h2>
-  <form class="command-form" data-endpoint="/api/claims/{{ claim.id }}/approve">
-    <input type="hidden" name="expected_version" value="{{ claim.version }}">
-    <label>Reason<textarea name="reason" minlength="3" maxlength="500" required></textarea></label>
-    <button type="submit">Approve (simulated)</button><p class="form-message" aria-live="polite"></p>
-  </form>
-</section>
-{% endif %}
-<section class="panel"><h2>Audit history</h2>{% include "audit_rows.html" %}</section>
+<div class="page-heading">
+  <div><p class="eyebrow"><a href="/claims">Claims & refunds</a></p><h1 class="id">{{ claim.id }}</h1><p>{{ claim.description }} · {{ claim.claimant_ref }}</p></div>
+  <span class="status {{ claim.status }}">{{ claim.status|title }}</span>
+</div>
+<p class="notice">Approval records the decision. Payout is executed by the payments system.</p>
+<div class="detail-grid">
+  <div class="detail-column">
+    <section class="panel"><h2>Claim details</h2>
+      <dl class="facts">
+        <dt>Claim type</dt><dd>{{ claim.claim_type|title }}</dd>
+        <dt>Customer reference</dt><dd class="id">{{ claim.claimant_ref }}</dd>
+        <dt>Amount</dt><dd class="number">{{ claim.currency }} {{ "%.2f"|format(claim.amount_minor / 100) }}</dd>
+        <dt>Submitted</dt><dd>{{ claim.submitted_at[:19].replace("T", " ") }} UTC</dd>
+        <dt>Decided</dt><dd>{{ claim.decided_at[:19].replace("T", " ") ~ " UTC" if claim.decided_at else "Pending decision" }}</dd>
+        <dt>Counterparty</dt><dd><a href="/counterparties/{{ claim.counterparty_id }}">{{ claim.counterparty_name }} ({{ claim.counterparty_id }})</a></dd>
+        <dt>Counterparty status</dt><dd>{{ claim.counterparty_status|replace("_", " ")|title }}</dd>
+      </dl>
+    </section>
+  </div>
+  <div class="detail-column">
+    {% if "claim.approve" in permissions and claim.status == "submitted" %}
+    <section class="panel action-panel"><h2>Record decision</h2>
+      <form class="command-form" data-endpoint="/api/claims/{{ claim.id }}/decide">
+        <input type="hidden" name="expected_version" value="{{ claim.version }}">
+        <label>Reason<textarea name="reason" minlength="3" maxlength="500" placeholder="Reason (recorded in the audit log)" required></textarea></label>
+        <div class="page-actions"><button type="submit" name="decision" value="approve">Approve</button><button class="danger" type="submit" name="decision" value="reject">Reject</button></div>
+        <p class="form-message" aria-live="polite"></p>
+      </form>
+    </section>
+    {% elif "claim.approve" not in permissions %}<section class="panel"><p class="muted">You have read-only access.</p></section>
+    {% else %}<section class="panel"><p class="muted">Decision recorded.</p></section>{% endif %}
+    <section class="panel"><h2>Audit history</h2>{% include "audit_rows.html" %}</section>
+  </div>
+</div>
 {% endblock %}

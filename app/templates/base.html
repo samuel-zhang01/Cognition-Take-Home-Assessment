@@ -3,24 +3,41 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Shared Operations Portal{% endblock %}</title>
+  <title>{% block title %}Operations Portal{% endblock %}</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <div class="banner">Demo authentication (not SSO) · Synthetic data · Insurance proxy for fintech tools</div>
-  <header class="site-header">
-    <a class="brand" href="/">Shared Operations Portal</a>
-    {% if user %}
-    <nav>
-      {% for module in modules %}<a href="{{ module.path }}">{{ module.title }}</a>{% endfor %}
-    </nav>
-    <div class="identity">
-      <span>{{ user.display_name }} <small>({{ user.role|replace("_", " ") }})</small></span>
-      <form method="post" action="/logout"><button class="link-button" type="submit">Log out</button></form>
-    </div>
-    {% endif %}
-  </header>
-  <main>{% block content %}{% endblock %}</main>
+  {% if user %}
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span>Operations Portal</span></a>
+      <nav class="side-nav" aria-label="Main navigation">
+        {% for group, items in nav_groups %}
+        <section class="nav-group">
+          <span class="nav-label">{{ group }}</span>
+          {% for item in items %}
+          <a class="nav-link {% if request.url.path == item.path or (item.path != '/' and request.url.path.startswith(item.path + '/')) %}active{% endif %}" href="{{ item.path }}">{{ item.title }}</a>
+          {% endfor %}
+        </section>
+        {% endfor %}
+      </nav>
+      <div class="user-block">
+        <strong>{{ user.display_name }}</strong>
+        <span>{{ user.role|replace("_", " ")|title }}</span>
+        <form method="post" action="/logout"><button class="sign-out" type="submit">Sign out</button></form>
+      </div>
+    </aside>
+    <main class="content-shell"><div class="content">
+  {% else %}
+  <main class="login-main">
+  {% endif %}
+    {% block content %}{% endblock %}
+  {% if user %}
+    </div></main>
+  {% else %}
+  </main>
+  {% endif %}
   <script src="/static/app.js"></script>
+  {% block extra_scripts %}{% endblock %}
 </body>
 </html>

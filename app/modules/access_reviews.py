@@ -21,22 +21,29 @@ class DecisionRequest(BaseModel):
     expected_version: int
 
 
-def list_entitlements(conn, status=None):
-    query = "SELECT * FROM entitlements"
-    args = ()
+def list_entitlements(conn, status=None, resource_id=None):
+    conditions = []
+    args = []
     if status:
-        query += " WHERE status = ?"
-        args = (status,)
+        conditions.append("status = ?")
+        args.append(status)
+    if resource_id:
+        conditions.append("id = ?")
+        args.append(resource_id)
+    query = "SELECT * FROM entitlements"
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
     query += " ORDER BY id"
     return [dict(row) for row in conn.execute(query, args).fetchall()]
 
 
 @router.get("/api/access-reviews")
 def api_access_reviews(
+    status: str | None = None,
     conn=Depends(get_connection),
     user=Depends(require_permission("modules.read")),
 ):
-    return list_entitlements(conn)
+    return list_entitlements(conn, status)
 
 
 @router.post("/api/access-reviews/{entitlement_id}/decide")
@@ -76,6 +83,7 @@ def decide_access(
 def access_reviews_page(
     request: Request,
     status: str | None = None,
+    resource_id: str | None = None,
     conn=Depends(get_connection),
 ):
     user = page_user(request, conn)
@@ -86,7 +94,33 @@ def access_reviews_page(
         "access_reviews.html",
         user=user,
         permissions=ROLE_PERMISSIONS[user["role"]],
-        entitlements=list_entitlements(conn, status),
+        entitlements=list_entitlements(conn, status, resource_id),
         audit=list_audit(conn, user, module="access_reviews")[:8],
         selected_status=status or "",
+    )
+
+
+@router.get("/access-reviews/{entitlement_id}")
+def access_review_detail(
+    entitlement_id: str,
+    request: Request,
+    conn=Depends(get_connection),
+):
+    user = page_user(request, conn)
+    if user is None:
+        return RedirectResponse("/login", status_code=303)
+    entitlement = conn.execute(
+        "SELECT * FROM entitlements WHERE id = ?", (entitlement_id,)
+    ).fetchone()
+    if entitlement is None:
+        return RedirectResponse("/access-reviews", status_code=303)
+    return render(
+        request,
+        "access_review_detail.html",
+        user=user,
+        permissions=ROLE_PERMISSIONS[user["role"]],
+        entitlement=dict(entitlement),
+        audit=list_audit(
+            conn, user, module="access_reviews", resource_id=entitlement_id
+        ),
     )

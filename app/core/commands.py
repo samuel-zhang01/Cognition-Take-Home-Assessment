@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from typing import Callable
 
 from app.core.audit import write_audit
+from app.core.controls import record_control_event
 from app.core.db import transaction
 from app.core.permissions import ROLE_PERMISSIONS
 
@@ -56,63 +57,73 @@ def run_command(
     expected_version: int,
     apply: Callable[[dict], dict],
 ) -> dict:
-    if permission not in ROLE_PERMISSIONS.get(user["role"], set()):
-        raise Forbidden("Permission denied")
-    reason = (reason or "").strip()
-    if len(reason) < 3 or len(reason) > 500:
-        raise ValidationFailed("Reason must contain 3 to 500 characters")
+    try:
+        if permission not in ROLE_PERMISSIONS.get(user["role"], set()):
+            raise Forbidden("Permission denied")
+        reason = (reason or "").strip()
+        if len(reason) < 3 or len(reason) > 500:
+            raise ValidationFailed("Reason must contain 3 to 500 characters")
 
-    with transaction(conn):
-        row = conn.execute(
-            f"SELECT * FROM {table} WHERE {id_column} = ?", (resource_id,)
-        ).fetchone()
-        if row is None:
-            raise NotFound(f"{resource_type} not found")
-        current = dict(row)
-        if current["version"] != expected_version:
-            raise StaleVersion(
-                "Resource has changed; reload and try again",
-                current_version=current["version"],
-            )
-        changes = apply(current)
-        if not changes:
-            raise InvalidTransition("The requested change does not alter this resource")
-        before = {key: current[key] for key in changes}
-        after = dict(changes)
-        now = datetime.now(timezone.utc).isoformat()
-        assignments = [f"{key} = ?" for key in changes]
-        values = list(changes.values())
-        assignments.extend(("version = version + 1", "updated_at = ?"))
-        values.extend((now, resource_id, expected_version))
-        cursor = conn.execute(
-            f"UPDATE {table} SET {', '.join(assignments)} "
-            f"WHERE {id_column} = ? AND version = ?",
-            values,
-        )
-        if cursor.rowcount != 1:
-            latest = conn.execute(
-                f"SELECT version FROM {table} WHERE {id_column} = ?", (resource_id,)
-            ).fetchone()
-            raise StaleVersion(
-                "Resource has changed; reload and try again",
-                current_version=latest["version"] if latest else None,
-            )
-        updated = dict(
-            conn.execute(
+        with transaction(conn):
+            row = conn.execute(
                 f"SELECT * FROM {table} WHERE {id_column} = ?", (resource_id,)
             ).fetchone()
-        )
-        write_audit(
-            conn,
-            actor_username=user["username"],
-            actor_role=user["role"],
-            module=module,
-            resource_type=resource_type,
-            resource_id=resource_id,
-            action=action,
-            reason=reason,
-            before=before,
-            after=after,
-            resource_version=updated["version"],
-        )
-    return updated
+            if row is None:
+                raise NotFound(f"{resource_type} not found")
+            current = dict(row)
+            if current["version"] != expected_version:
+                raise StaleVersion(
+                    "Resource has changed; reload and try again",
+                    current_version=current["version"],
+                )
+            changes = apply(current)
+            if not changes:
+                raise InvalidTransition("The requested change does not alter this resource")
+            before = {key: current[key] for key in changes}
+            after = dict(changes)
+            now = datetime.now(timezone.utc).isoformat()
+            assignments = [f"{key} = ?" for key in changes]
+            values = list(changes.values())
+            assignments.extend(("version = version + 1", "updated_at = ?"))
+            values.extend((now, resource_id, expected_version))
+            cursor = conn.execute(
+                f"UPDATE {table} SET {', '.join(assignments)} "
+                f"WHERE {id_column} = ? AND version = ?",
+                values,
+            )
+            if cursor.rowcount != 1:
+                latest = conn.execute(
+                    f"SELECT version FROM {table} WHERE {id_column} = ?", (resource_id,)
+                ).fetchone()
+                raise StaleVersion(
+                    "Resource has changed; reload and try again",
+                    current_version=latest["version"] if latest else None,
+                )
+            updated = dict(
+                conn.execute(
+                    f"SELECT * FROM {table} WHERE {id_column} = ?", (resource_id,)
+                ).fetchone()
+            )
+            write_audit(
+                conn,
+                actor_username=user["username"],
+                actor_role=user["role"],
+                module=module,
+                resource_type=resource_type,
+                resource_id=resource_id,
+                action=action,
+                reason=reason,
+                before=before,
+                after=after,
+                resource_version=updated["version"],
+            )
+        return updated
+    except (Forbidden, StaleVersion, InvalidTransition, ValidationFailed) as exc:
+        outcome = {
+            Forbidden: "forbidden",
+            StaleVersion: "stale_version",
+            InvalidTransition: "invalid_transition",
+            ValidationFailed: "validation_failed",
+        }[type(exc)]
+        record_control_event(conn, user, module, resource_id, outcome)
+        raise

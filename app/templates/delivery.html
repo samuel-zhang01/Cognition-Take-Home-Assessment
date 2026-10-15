@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Delivery log · Operations Portal{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><h1>Delivery log</h1><p>Accepted changes, elapsed time, and recorded checks.</p></div>
+</div>
+<section class="kpi-grid">
+  <article class="kpi-card"><div class="kpi-label">Accepted changes</div><div class="metric-value">{{ summary.accepted_changes }}</div><div class="kpi-sub">commits in this log</div></article>
+  <article class="kpi-card"><div class="kpi-label">Total elapsed</div><div class="metric-value">{{ summary.total_elapsed_min }}</div><div class="kpi-sub">minutes</div></article>
+  <article class="kpi-card"><div class="kpi-label">Tests passing</div><div class="metric-value">{{ summary.tests_passing }}</div><div class="kpi-sub">latest full suite</div></article>
+</section>
+<div class="table-wrap">
+  <table><thead><tr><th>Commit</th><th>Date</th><th>Summary</th><th>Elapsed</th><th>Human time</th><th>Checks</th></tr></thead>
+  <tbody>{% for entry in entries %}
+    <tr><td class="id">{{ entry.commit[:8] }}</td><td>{{ entry.date }}</td><td>{{ entry.summary }}</td><td class="number">{{ entry.elapsed_min }} min</td><td>{{ entry.human_min if entry.human_min is not none else "Not measured" }}</td><td>{% if entry.checks %}<ul class="checks-list">{% for check in entry.checks %}<li>{{ check }}</li>{% endfor %}</ul>{% else %}<span class="muted">No check recorded</span>{% endif %}</td></tr>
+  {% endfor %}</tbody></table>
+</div>
+{% endblock %}
