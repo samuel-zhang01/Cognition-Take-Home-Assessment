@@ -12,21 +12,21 @@
         <dt>Type</dt><dd>{{ counterparty.kind|title }}</dd>
         <dt>Country</dt><dd>{{ counterparty.country }}</dd>
         <dt>Risk tier</dt><dd><span class="status {{ counterparty.risk_tier }}">{{ counterparty.risk_tier|title }}</span></dd>
-        <dt>Assigned reviewer</dt><dd>{{ counterparty.assigned_reviewer }}</dd>
-        <dt>Submitted</dt><dd>{{ counterparty.submitted_at[:19].replace("T", " ") }} UTC</dd>
-        <dt>Decided</dt><dd>{{ counterparty.decided_at[:19].replace("T", " ") ~ " UTC" if counterparty.decided_at else "Pending review" }}</dd>
+        <dt>Assigned reviewer</dt><dd>{{ counterparty.assigned_reviewer_display or counterparty.assigned_reviewer }}</dd>
+        <dt>Submitted</dt><dd class="date-cell">{{ counterparty.submitted_at|datetime }}</dd>
+        <dt>Decided</dt><dd class="date-cell">{{ counterparty.decided_at|datetime if counterparty.decided_at else "Pending review" }}</dd>
       </dl>
     </section>
     <section class="panel">
       <h2>Financial strength</h2>
       {% for evidence in counterparty.evidence if evidence.evidence_type == "financial_strength_opinion" %}
-      <div class="evidence"><strong>{{ evidence.value }}</strong><p>{{ evidence.source }}</p><small>As of {{ evidence.as_of }}</small></div>
+        <div class="evidence"><strong>{{ evidence.value }}</strong><p>{{ evidence.source }}</p><small>As of <span class="date-cell">{{ evidence.as_of|datetime }}</span></small></div>
       {% endfor %}
     </section>
     <section class="panel">
       <h2>Payout history</h2>
       {% for evidence in counterparty.evidence if evidence.evidence_type == "observed_payout_history" %}
-      <div class="evidence"><strong>{{ evidence.value }}</strong><p>{{ evidence.source }}</p><small>As of {{ evidence.as_of }}</small></div>
+        <div class="evidence"><strong>{{ evidence.value }}</strong><p>{{ evidence.source }}</p><small>As of <span class="date-cell">{{ evidence.as_of|datetime }}</span></small></div>
       {% endfor %}
     </section>
     <section class="panel"><h2>Linked claims</h2>
@@ -44,7 +44,7 @@
         <p class="form-message" aria-live="polite"></p>
       </form>
     </section>
-    {% elif "counterparty.review" not in permissions %}<section class="panel"><p class="muted">You have read-only access.</p></section>
+    {% elif "counterparty.review" not in permissions %}<p class="read-only-notice">You have read-only access.</p>
     {% else %}<section class="panel"><p class="muted">Review decision recorded.</p></section>{% endif %}
     <section class="panel"><h2>Audit history</h2>{% include "audit_rows.html" %}</section>
   </div>

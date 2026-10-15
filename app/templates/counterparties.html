@@ -12,7 +12,7 @@
 <div class="table-wrap"><table>
   <thead><tr><th>Counterparty</th><th>Type</th><th>Country</th><th>Risk</th><th>Reviewer</th><th>Status</th><th>Claims</th></tr></thead>
   <tbody>{% for item in counterparties %}
-  <tr data-href="/counterparties/{{ item.id }}"><td><a href="/counterparties/{{ item.id }}">{{ item.name }}</a><small class="sub id">{{ item.id }} · {{ item.registration_number }}</small></td><td>{{ item.kind|title }}</td><td>{{ item.country }}</td><td><span class="status {{ item.risk_tier }}">{{ item.risk_tier|title }}</span></td><td>{{ item.assigned_reviewer }}</td><td><span class="status {{ item.status }}">{{ item.status|replace("_", " ") }}</span></td><td>{{ item.linked_claims }}</td></tr>
+  <tr data-href="/counterparties/{{ item.id }}"><td><a href="/counterparties/{{ item.id }}">{{ item.name }}</a><small class="sub id">{{ item.id }} · {{ item.registration_number }}</small></td><td>{{ item.kind|title }}</td><td>{{ item.country }}</td><td><span class="status {{ item.risk_tier }}">{{ item.risk_tier|title }}</span></td><td>{{ item.assigned_reviewer_display or item.assigned_reviewer }}</td><td><span class="status {{ item.status }}">{{ item.status|replace("_", " ") }}</span></td><td>{{ item.linked_claims }}</td></tr>
   {% else %}<tr><td colspan="7">No counterparties match this filter.</td></tr>
   {% endfor %}</tbody>
 </table></div>

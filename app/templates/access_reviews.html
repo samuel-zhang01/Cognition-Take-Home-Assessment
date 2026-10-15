@@ -11,7 +11,7 @@
 </div>
 <div class="table-wrap"><table><thead><tr><th>Record</th><th>Employee and team</th><th>System</th><th>Access level</th><th>Last used</th><th>Quarter</th><th>Status</th></tr></thead>
   <tbody>{% for entitlement in entitlements %}
-  <tr data-href="/access-reviews/{{ entitlement.id }}"><td><a href="/access-reviews/{{ entitlement.id }}" class="id">{{ entitlement.id }}</a></td><td>{{ entitlement.employee }}<small class="sub">{{ entitlement.team }}</small></td><td>{{ entitlement.system }}</td><td>{{ entitlement.access_level }}</td><td>{{ entitlement.last_used_at[:10] }}</td><td>{{ entitlement.quarter }}</td><td><span class="status {{ entitlement.status }}">{{ entitlement.status|title }}</span></td></tr>
+  <tr data-href="/access-reviews/{{ entitlement.id }}"><td><a href="/access-reviews/{{ entitlement.id }}" class="id">{{ entitlement.id }}</a></td><td>{{ entitlement.employee }}<small class="sub">{{ entitlement.team }}</small></td><td>{{ entitlement.system }}</td><td>{{ entitlement.access_level }}</td><td class="date-cell">{{ entitlement.last_used_at|datetime }}</td><td>{{ entitlement.quarter }}</td><td><span class="status {{ entitlement.status }}">{{ entitlement.status|title }}</span></td></tr>
   {% else %}<tr><td colspan="7">No access reviews match this filter.</td></tr>
   {% endfor %}</tbody>
 </table></div>

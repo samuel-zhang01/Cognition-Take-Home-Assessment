@@ -171,7 +171,7 @@ def test_demo_account_choices_can_be_hidden(tmp_path, monkeypatch):
     with TestClient(application) as client:
         monkeypatch.delenv("SHOW_DEMO_ACCOUNTS", raising=False)
         default_page = client.get("/login")
-        assert "Sign in as" in default_page.text
+        assert "Demo accounts" in default_page.text
         assert (
             f"Password for all accounts: {os.environ.get('DEMO_PASSWORD', 'demo')}"
             in default_page.text
@@ -180,7 +180,7 @@ def test_demo_account_choices_can_be_hidden(tmp_path, monkeypatch):
 
         monkeypatch.setenv("SHOW_DEMO_ACCOUNTS", "0")
         hidden_page = client.get("/login")
-        assert "Sign in as" not in hidden_page.text
+        assert "Demo accounts" not in hidden_page.text
         assert "Password for all accounts" not in hidden_page.text
         assert "Nina Okafor" not in hidden_page.text
         assert "name=\"username\"" in hidden_page.text

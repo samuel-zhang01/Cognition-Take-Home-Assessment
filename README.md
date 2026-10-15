@@ -13,7 +13,13 @@ All companies, people, and figures are fictional.
 | Feature flags | Change a flag with an owner, environment, reason, version check, and audit entry. |
 | Access reviews | Certify or revoke employee access for the 2026-Q4 review period. |
 
-The dashboard summarizes each workflow, recent in-scope activity, import and export counts, and control outcomes. The business case page lets a reviewer vary avoidable spend, transition cost, recurring ownership, and capacity assumptions. The app catalog reports source lines and recorded build time. The delivery log distinguishes elapsed time from unmeasured human effort.
+The dashboard summarizes each workflow, recent in-scope activity, import and export counts, and control outcomes. The business case page lets a reviewer vary avoidable spend, transition cost, recurring ownership, and capacity assumptions. The app catalog reports source lines and the round in which each app was built. The delivery log records two rounds of wall-clock effort and human time, which was not measured.
+
+## Build rounds
+
+The initial prototype ran from 2026-10-15T17:17:23Z to 2026-10-15T17:28:16Z, about 11 minutes. The refinement round ran from 2026-10-15T17:47:07Z to the last refinement commit recorded in the delivery log. The 0.9-minute Access Reviews measurement, 17:48:17Z to 17:49:11Z, only covered applying an already written module spec; it is not used as build time. The change was 10 files changed, 205 insertions(+), 5 deletions(-).
+
+Rounds were timed from brief to last commit. Commits were batched, so per-commit timing is not meaningful. Human time was not measured.
 
 ## Run it
 

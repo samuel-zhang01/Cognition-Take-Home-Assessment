@@ -17,7 +17,7 @@ REPO_ROOT = APP_ROOT.parent
 def load_delivery_log():
     path = APP_ROOT / "delivery_log.json"
     if not path.exists():
-        return {"entries": [], "tests_passing": 0}
+        return {"rounds": [], "access_reviews_build": {}, "tests_passing": 0}
     return json.loads(path.read_text())
 
 
@@ -31,10 +31,12 @@ def source_lines(files):
 
 
 def _delivery_summary(log):
-    entries = log.get("entries", [])
+    rounds = log.get("rounds", [])
     return {
-        "accepted_changes": len(entries),
-        "total_elapsed_min": sum(entry["elapsed_min"] for entry in entries),
+        "rounds": len(rounds),
+        "total_wall_clock_minutes": round(
+            sum(item["wall_clock_minutes"] for item in rounds)
+        ),
         "tests_passing": log.get("tests_passing", 0),
     }
 
@@ -45,11 +47,12 @@ def business_case(request: Request, conn=Depends(get_connection)):
     if user is None:
         return RedirectResponse("/login", status_code=303)
     log = load_delivery_log()
+    rounds = log.get("rounds", [])
     return render(
         request,
         "business_case.html",
         user=user,
-        measured_minutes=log.get("access_reviews_build", {}).get("elapsed_min", 1),
+        measured_minutes=round(rounds[1]["wall_clock_minutes"]) if len(rounds) > 1 else 22,
     )
 
 
@@ -63,7 +66,7 @@ def delivery_page(request: Request, conn=Depends(get_connection)):
         request,
         "delivery.html",
         user=user,
-        entries=log.get("entries", []),
+        rounds=log.get("rounds", []),
         summary=_delivery_summary(log),
     )
 
@@ -74,20 +77,17 @@ def apps_page(request: Request, conn=Depends(get_connection)):
     if user is None:
         return RedirectResponse("/login", status_code=303)
     log = load_delivery_log()
-    entries = log.get("entries", [])
     access_build = log.get("access_reviews_build", {})
-    first_build = next((entry for entry in entries if entry["commit"].startswith("6ccf791")), None)
+    rounds = log.get("rounds", [])
+    first_round_minutes = round(rounds[0]["wall_clock_minutes"]) if rounds else 11
+    second_round_minutes = round(rounds[1]["wall_clock_minutes"]) if len(rounds) > 1 else 22
     apps = []
     for module in MODULES:
-        if module.key == "access_reviews":
-            build_minutes = access_build.get("elapsed_min", 1)
-        else:
-            build_minutes = first_build["elapsed_min"] if first_build else 0
         apps.append(
             {
                 "spec": module,
                 "loc": source_lines(module.source_files),
-                "build_minutes": build_minutes,
+                "round_number": 2 if module.key == "access_reviews" else 1,
             }
         )
     return render(
@@ -96,4 +96,6 @@ def apps_page(request: Request, conn=Depends(get_connection)):
         user=user,
         apps=apps,
         access_build=access_build,
+        first_round_minutes=first_round_minutes,
+        second_round_minutes=second_round_minutes,
     )

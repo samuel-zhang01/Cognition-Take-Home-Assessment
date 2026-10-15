@@ -27,10 +27,12 @@ def list_counterparties(conn, status=None):
     return [
         dict(row)
         for row in conn.execute(
-            f"""SELECT c.*, COUNT(cl.id) AS linked_claims
+            f"""SELECT c.*, reviewer.display_name AS assigned_reviewer_display,
+                       COUNT(cl.id) AS linked_claims
                 FROM counterparties c LEFT JOIN claims cl ON cl.counterparty_id = c.id
+                LEFT JOIN users reviewer ON reviewer.username = c.assigned_reviewer
                 {status_filter}
-                GROUP BY c.id ORDER BY c.id""",
+                GROUP BY c.id, reviewer.display_name ORDER BY c.id""",
             args,
         ).fetchall()
     ]
@@ -38,7 +40,11 @@ def list_counterparties(conn, status=None):
 
 def get_counterparty(conn, counterparty_id):
     row = conn.execute(
-        "SELECT * FROM counterparties WHERE id = ?", (counterparty_id,)
+        """SELECT c.*, reviewer.display_name AS assigned_reviewer_display
+           FROM counterparties c LEFT JOIN users reviewer
+             ON reviewer.username = c.assigned_reviewer
+           WHERE c.id = ?""",
+        (counterparty_id,),
     ).fetchone()
     if not row:
         return None

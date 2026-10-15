@@ -57,5 +57,5 @@ def list_audit(conn, user, module=None, resource_id=None):
     if resource_id:
         query += " AND resource_id = ?"
         args.append(resource_id)
-    query += " ORDER BY id DESC"
+    query += " ORDER BY at DESC, id DESC"
     return [dict(row) for row in conn.execute(query, args).fetchall()]

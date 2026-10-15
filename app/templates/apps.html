@@ -7,8 +7,9 @@
 <section class="cards">
   {% for app in apps %}
   <article class="card">
-    <div class="card-meta"><span>{{ app.spec.owner }}</span><span>{{ app.build_minutes }} min build time</span></div>
+    <div class="card-meta"><span>{{ app.spec.owner }}</span></div>
     <h2><a href="{{ app.spec.path }}">{{ app.spec.title }}</a></h2>
+    <p class="build-round">{% if app.round_number == 2 %}Built in round 2 by following the module guide{% else %}Built in round 1 with the shared foundation (about {{ first_round_minutes }} min){% endif %}</p>
     <p>{{ app.spec.description }}</p>
     <div class="card-meta"><strong>Replaces</strong><span>{{ app.spec.replaces }}</span></div>
     <div class="control-chips">{% for control in app.spec.controls %}<span class="control-chip">{{ control }}</span>{% endfor %}</div>
@@ -45,6 +46,6 @@
     "access_reviews.import",
 }
 AUDIT_SCOPE["access_reviewer"] = {"access_reviews"}</code></pre>
-  <p>Added in {{ access_build.elapsed_min }} minutes. {{ access_build.diff_stat }}</p>
+  <p>Added in round 2 ({{ second_round_minutes }}-minute round, which also delivered import/export, the dashboard and auth hardening). {{ access_build.diff_stat }}</p>
 </section>
 {% endblock %}

@@ -20,7 +20,7 @@
       <div class="kpi-card"><div class="kpi-label">Approved</div><div class="metric-value">{{ metrics.claims.approved_30d }}</div><div class="kpi-sub">last 30 days</div></div>
       <div class="kpi-card"><div class="kpi-label">Median decision</div><div class="metric-value">{{ metrics.claims.median_hours_to_decision }}h</div><div class="kpi-sub">submitted to decision</div></div>
     </div>
-    <div class="currency-values">{% for currency, amount in metrics.claims.open_value_by_currency.items() %}<span class="currency-value">{{ currency }} {{ "%.2f"|format(amount / 100) }}</span>{% else %}<span class="muted">No open value</span>{% endfor %}</div>
+    <div class="open-value"><span class="kpi-label">Open value</span><div class="currency-values">{% for currency, amount in metrics.claims.open_value_by_currency.items() %}<span class="currency-value">{{ currency }} {{ "%.2f"|format(amount / 100) }}</span>{% else %}<span class="muted">No open value</span>{% endfor %}</div></div>
   </article>
   <article class="dashboard-app">
     <div class="dashboard-app-head"><h2><a href="/flags">Feature flags</a></h2><span class="sub">Environment controls</span></div>
@@ -54,7 +54,7 @@
   {% if recent_activity %}
   <div class="table-wrap"><table class="audit-table"><thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Resource</th><th>Reason</th></tr></thead><tbody>
     {% for event in recent_activity %}
-    <tr><td>{{ event.at[:10] }} {{ event.at[11:19] }} UTC</td><td>{{ event.actor_username }}</td><td>{{ event.action|replace("_", " ") }}</td><td><a href="/audit?module={{ event.module }}&resource_id={{ event.resource_id }}">{{ event.resource_type }} <span class="id">{{ event.resource_id }}</span></a></td><td>{{ event.reason }}</td></tr>
+    <tr><td class="date-cell">{{ event.at|datetime }}</td><td>{{ event.actor_username }}</td><td>{{ event.action|replace("_", " ") }}</td><td><a href="/audit?module={{ event.module }}&resource_id={{ event.resource_id }}">{{ event.resource_type }} <span class="id">{{ event.resource_id }}</span></a></td><td>{{ event.reason }}</td></tr>
     {% endfor %}
   </tbody></table></div>
   {% else %}<div class="panel muted">No recent events in your scope.</div>{% endif %}

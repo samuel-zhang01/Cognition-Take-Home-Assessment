@@ -13,8 +13,8 @@
         <dt>Claim type</dt><dd>{{ claim.claim_type|title }}</dd>
         <dt>Customer reference</dt><dd class="id">{{ claim.claimant_ref }}</dd>
         <dt>Amount</dt><dd class="number">{{ claim.currency }} {{ "%.2f"|format(claim.amount_minor / 100) }}</dd>
-        <dt>Submitted</dt><dd>{{ claim.submitted_at[:19].replace("T", " ") }} UTC</dd>
-        <dt>Decided</dt><dd>{{ claim.decided_at[:19].replace("T", " ") ~ " UTC" if claim.decided_at else "Pending decision" }}</dd>
+        <dt>Submitted</dt><dd class="date-cell">{{ claim.submitted_at|datetime }}</dd>
+        <dt>Decided</dt><dd class="date-cell">{{ claim.decided_at|datetime if claim.decided_at else "Pending decision" }}</dd>
         <dt>Counterparty</dt><dd><a href="/counterparties/{{ claim.counterparty_id }}">{{ claim.counterparty_name }} ({{ claim.counterparty_id }})</a></dd>
         <dt>Counterparty status</dt><dd>{{ claim.counterparty_status|replace("_", " ")|title }}</dd>
       </dl>
@@ -30,7 +30,7 @@
         <p class="form-message" aria-live="polite"></p>
       </form>
     </section>
-    {% elif "claim.approve" not in permissions %}<section class="panel"><p class="muted">You have read-only access.</p></section>
+    {% elif "claim.approve" not in permissions %}<p class="read-only-notice">You have read-only access.</p>
     {% else %}<section class="panel"><p class="muted">Decision recorded.</p></section>{% endif %}
     <section class="panel"><h2>Audit history</h2>{% include "audit_rows.html" %}</section>
   </div>

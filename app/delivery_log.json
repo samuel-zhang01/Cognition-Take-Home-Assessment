@@ -1,70 +1,48 @@
 {
-  "build_start": "2026-10-15T18:17:23+01:00",
-  "refinement_start": "2026-10-15T17:47:07+00:00",
   "tests_passing": 22,
   "access_reviews_build": {
     "commit": "30cf640",
-    "start": "2026-10-15T17:48:17+00:00",
-    "end": "2026-10-15T17:49:11+00:00",
-    "elapsed_min": 0.9,
+    "spec_application_minutes": 0.9,
+    "spec_application_started_at": "2026-10-15T17:48:17+00:00",
+    "spec_application_finished_at": "2026-10-15T17:49:11+00:00",
     "diff_stat": "10 files changed, 205 insertions(+), 5 deletions(-)"
   },
-  "entries": [
+  "rounds": [
     {
-      "commit": "6ccf79100be344f34884ec61c98e5a7fd21bafaf",
-      "date": "2026-10-15T17:22:59+00:00",
-      "summary": "Shared foundation and three workflows (D022, D023)",
-      "elapsed_min": 6,
-      "human_min": null,
-      "checks": [".venv/bin/pytest -q: 7 passed, 1 warning", "Docker build passed"]
+      "name": "Initial prototype",
+      "start": "2026-10-15T17:17:23+00:00",
+      "end": "2026-10-15T17:28:16+00:00",
+      "wall_clock_minutes": 10.9,
+      "human_time": null,
+      "commits": [
+        {"hash": "6ccf79100be344f34884ec61c98e5a7fd21bafaf", "summary": "Shared foundation and three workflows (D022, D023)", "time": "2026-10-15T17:22:59+00:00"},
+        {"hash": "173473e7180e23cea1330e629d6af5bd9ec1362e", "summary": "Store session-derived audit usernames (D024)", "time": "2026-10-15T17:24:50+00:00"},
+        {"hash": "40432eacf29d8d11254589f0bfaed4e2497365cc", "summary": "Improve account access and audit display (D023)", "time": "2026-10-15T17:26:30+00:00"},
+        {"hash": "c60af01757f3bae2522ade41259ba515752790d8", "summary": "Document the initial portal build", "time": "2026-10-15T17:28:16+00:00"}
+      ],
+      "checks": [
+        ".venv/bin/pytest -q: 7 passed, 1 warning",
+        "Docker build passed",
+        "Login, mutation, authorization and audit smoke checks passed"
+      ]
     },
     {
-      "commit": "173473e7180e23cea1330e629d6af5bd9ec1362e",
-      "date": "2026-10-15T17:24:50+00:00",
-      "summary": "Store session-derived audit usernames (D024)",
-      "elapsed_min": 2,
-      "human_min": null,
-      "checks": [".venv/bin/pytest -q: 7 passed, 1 warning"]
-    },
-    {
-      "commit": "40432eacf29d8d11254589f0bfaed4e2497365cc",
-      "date": "2026-10-15T17:26:30+00:00",
-      "summary": "Improve account access and audit display (D023)",
-      "elapsed_min": 2,
-      "human_min": null,
-      "checks": [".venv/bin/pytest -q: 7 passed, 1 warning"]
-    },
-    {
-      "commit": "c60af01757f3bae2522ade41259ba515752790d8",
-      "date": "2026-10-15T17:28:16+00:00",
-      "summary": "Document the initial portal build",
-      "elapsed_min": 2,
-      "human_min": null,
-      "checks": []
-    },
-    {
-      "commit": "30cf640",
-      "date": "2026-10-15T18:00:44+00:00",
-      "summary": "Add Access reviews using the module guide (D029)",
-      "elapsed_min": 0.9,
-      "human_min": null,
-      "checks": ["Access reviews decision test: 1 passed, 1 warning"]
-    },
-    {
-      "commit": "bbce6e4",
-      "date": "2026-10-15T18:06:50+00:00",
-      "summary": "Harden login, session expiry, cookies and seed initialization",
-      "elapsed_min": 17.7,
-      "human_min": null,
-      "checks": [".venv/bin/pytest -q: 22 passed, 1 warning"]
-    },
-    {
-      "commit": "7559c58",
-      "date": "2026-10-15T18:07:05+00:00",
-      "summary": "Add import/export, control metrics, dashboard and business case",
-      "elapsed_min": 0.3,
-      "human_min": null,
-      "checks": [".venv/bin/pytest -q: 22 passed, 1 warning", "docker build -t ops-portal .: passed"]
+      "name": "Refinement",
+      "start": "2026-10-15T17:47:07+00:00",
+      "end": "2026-10-15T18:08:48+00:00",
+      "wall_clock_minutes": 21.7,
+      "human_time": null,
+      "commits": [
+        {"hash": "30cf640", "summary": "Add Access reviews using the module guide (D029)", "time": "2026-10-15T18:00:44+00:00"},
+        {"hash": "bbce6e4", "summary": "Harden login, session expiry, cookies and seed initialization", "time": "2026-10-15T18:06:50+00:00"},
+        {"hash": "7559c58", "summary": "Add import/export, control metrics, dashboard and business case", "time": "2026-10-15T18:07:05+00:00"},
+        {"hash": "d1dbc70", "summary": "Record refinement evidence and deployment guidance (D027-D031)", "time": "2026-10-15T18:08:48+00:00"}
+      ],
+      "checks": [
+        ".venv/bin/pytest -q: 22 passed, 1 warning",
+        "docker build -t ops-portal .: passed",
+        "Curl page checks passed after fixing flags template query"
+      ]
     }
   ]
 }

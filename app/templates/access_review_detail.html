@@ -13,9 +13,9 @@
         <dt>Team</dt><dd>{{ entitlement.team }}</dd>
         <dt>System</dt><dd>{{ entitlement.system }}</dd>
         <dt>Access level</dt><dd>{{ entitlement.access_level }}</dd>
-        <dt>Last used</dt><dd>{{ entitlement.last_used_at[:19].replace("T", " ") }} UTC</dd>
+        <dt>Last used</dt><dd class="date-cell">{{ entitlement.last_used_at|datetime }}</dd>
         <dt>Review quarter</dt><dd>{{ entitlement.quarter }}</dd>
-        <dt>Decision time</dt><dd>{{ entitlement.decided_at[:19].replace("T", " ") ~ " UTC" if entitlement.decided_at else "Pending review" }}</dd>
+        <dt>Decision time</dt><dd class="date-cell">{{ entitlement.decided_at|datetime if entitlement.decided_at else "Pending review" }}</dd>
       </dl>
     </section>
   </div>
@@ -29,7 +29,7 @@
         <p class="form-message" aria-live="polite"></p>
       </form>
     </section>
-    {% elif "access_reviews.decide" not in permissions %}<section class="panel"><p class="muted">You have read-only access.</p></section>
+    {% elif "access_reviews.decide" not in permissions %}<p class="read-only-notice">You have read-only access.</p>
     {% else %}<section class="panel"><p class="muted">Access decision recorded.</p></section>{% endif %}
     <section class="panel"><h2>Audit history</h2>{% include "audit_rows.html" %}</section>
   </div>
