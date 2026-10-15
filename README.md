@@ -112,7 +112,7 @@ Exports cover counterparties, claims, flags, access reviews, and audit data. Aud
 
 ## Add an app
 
-Follow the shared module guide in [Apps and delivery](/apps#add):
+Follow the module guide on the portal’s **Apps and delivery** page (`/apps#add`):
 
 1. Add a versioned table and seed records. Define role permissions and audit scope; add a demo account only if the module needs a distinct role.
 2. Create a router with permission-checked API reads and mutations through `run_command`. Register the router and `ModuleSpec`.
