@@ -42,7 +42,7 @@ A shared knowledge layer can reference authorized sources without moving transac
 
 ## Effect on the recommendation
 
-Test knowledge access alongside the internal-tool pilot. Example questions are whether a payment integration exposes transaction detail, where a displayed claim amount originates, or whether another service already implements a required adapter. Validate the answer against the responsible owner and authoritative implementation, including deployment configuration where relevant.
+For a future customer pilot, consider a knowledge-access check only if discovery identifies repeated questions as a material capacity cost. This is optional follow-up, not an additional assessment deliverable or prototype requirement. Example questions are whether a payment integration exposes transaction detail, where a displayed claim amount originates, or whether another service already implements a required adapter. Validate the answer against the responsible owner and authoritative implementation, including deployment configuration where relevant.
 
 Record requester search time, engineer involvement, elapsed time to an accepted answer, correction effort and unresolved questions. Check source citations, freshness and access boundaries. Keep knowledge-task results separate from app-change throughput; use both to explain total human effort. No numeric improvement target or dollar benefit is established here.
 
